@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <!-- Meta Tags -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <!-- CSS -->
+  <link rel="stylesheet" type="text/css" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css" />
+  <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+  <link rel="stylesheet" type="text/css" href="app.css" />
+
+  <title>Lethe</title>
+</head>
+<body id="body" style="background-color: lightcyan; visibility: hidden;">
+
+  <!-- 未登录时显示注册/登陆表单 -->
+  <article id="entry" style="position:absolute; margin: auto; width: 300px;">
+    <h1>Lethe</h1>
+    <hr />
+    <div class="form-group">
+      <label>Username</label>
+      <input type="text" class="form-control" id="username">
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" class="form-control" id="password">
+    </div>
+    <button type="button" class="btn btn-primary" id="btn_register">注册</button>
+    <button type="button" class="btn btn-primary" id="btn_login">登录</button>
+  </article>
+
+  <!-- 登录后显示主界面 -->
+  <article id="container" style="width: 100%; height: 100%; visibility: hidden;">
+    <aside>
+      <header>
+        <div id="div_avatar" class="avatar">
+          <img alt="avatar" id="user_avatar" src="/data/avatar/user.png"/>
+        </div>
+        <div id="user_username"></div>
+        <i class="material-icons">person</i>
+      </header>
+      <br />
+      <ul id="friends"></ul>
+    </aside>
+
+    <section id="main" style="width: 80%;">
+      <div id="messages" style="height: 75%"></div>
+      <div id="emojis" style="height: 20%"></div>
+      <footer style="height: 5%">
+        <div>
+          <input id="open_file" type="file" style="display: none" />
+          <i id="select_image" class="material-icons">image</i>
+          <i id="select_emoji" class="material-icons">tag_faces</i>
+        </div>
+      </footer>
+      <footer style="height: 25%">
+        <textarea id="input" placeholder="" style="height: 100%;"></textarea>
+        <div style="position: absolute; right: 10px; bottom: 10px">
+          <i id="send" class="material-icons">send</i>
+        </div>
+      </footer>
+    </section>
+  </article>
+
+  <!-- JavaScript -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/store.js/1.3.20/store.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.0/socket.io.dev.js"></script>
+  <script src="/socket.io/socket.io.js"></script> <!-- this script is provided by socket.io in runtime -->
+  <script src="app.js"></script>
+</body>
+</html>
