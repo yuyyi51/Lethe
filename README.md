@@ -23,9 +23,9 @@
   * [github markdown](https://guides.github.com/features/mastering-markdown/)
 
 ## TODO LIST
-  - 用户账户
-    - [ ] 注册：用户名查重，密码加密
-    - [ ] 登陆：密码加密
+  - 用户
+    - [o] 注册：用户名查重，密码加密
+    - [o] 登陆：密码加密
     - [x] 注销
     - [ ] 修改头像
   - 好友
@@ -49,7 +49,7 @@
 文本     | （无）
 超链接   | [link:url]
 表情符号 | [emoj:id]
-图片    | [img:relative_path]
+图片    | [img:uri]
 
     例一(文本、超链、符号可以混排)： 
       开头是个普通文本，然后可以试试[link:www.bilibili.com]，大概这就是[emoji:233]吧，完了。
@@ -65,4 +65,4 @@
 表情符号 | <img src"="url">
 图片    | <img src"="url">，注意适当限制max-width
 
-    相对url转绝对url通常在客户端完成，加个url_base就行了
+    uri转绝对url通常在客户端完成，加个url_base就行了

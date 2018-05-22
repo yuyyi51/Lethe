@@ -2,11 +2,11 @@
 function $$(id) { return document.getElementById(id); }
 
 const socket = io.connect();
-let url_base = 'http://localhost:3000'; // TODO: 我猜这个也可以从socket对象取得
-let authinfo = store.get('authinfo'); // 用户登陆信息 { username: str, password: str }
-let user = authinfo ? authinfo.username : null; // 暂存用户名
+socket.on('disconnect', () => { socket.open(); });
+let url_base = socket.io.uri; // 'http://localhost:3000'
+let authinfo, user;
 
-// Part 2: authinfo status control
+// Part 2: login status control
 function change_login_status(status) {
   if(status) {
     store.set('authinfo', authinfo);
@@ -23,22 +23,26 @@ function change_login_status(status) {
 }
 
 $$('btn_register').onclick = () => {
-  authinfo = { username: $$('username').value, password: $$('password').value };
-  socket.emit('register', authinfo);
+  authinfo = {
+    username: $$('username').value,
+    password: $$('password').value
+  };
+  socket.emit('user:register', authinfo);
 };
-socket.on('register', (res) => {
-  if(res === true) {
-    alert(authinfo.username + " register succeed, please login.");
-  } else {
-    alert(authinfo.username + " register failed.");
-  }
+socket.on('user:register', (res) => {
+  alert(authinfo.username +
+      (res === true
+          ? " register succeed, please login."
+          : " register failed."));
 });
-
 $$('btn_login').onclick = () => {
-  authinfo = { username: $$('username').value, password: $$('password').value };
-  socket.emit('login', authinfo);
+  authinfo = {
+    username: $$('username').value,
+    password: $$('password').value
+  };
+  socket.emit('user:login', authinfo);
 };
-socket.on('login', (res) => {
+socket.on('user:login', (res) => {
   if(res === false) {
     alert(authinfo.username + " login failed.");
     store.remove('authinfo');
@@ -46,7 +50,7 @@ socket.on('login', (res) => {
   }
 
   change_login_status(true);
-  socket.emit('get_userinfo', authinfo, (userinfo) => {
+  socket.emit('user:get_userinfo', authinfo, (userinfo) => {
     let user = userinfo;
     console.log(user);
 
@@ -103,7 +107,6 @@ socket.on('login', (res) => {
     }
   });
 });
-
 $$('div_avatar').onclick = () => {  // as logout btn
   if (confirm('are you sure to logout?')) {
     change_login_status(false);
@@ -111,73 +114,60 @@ $$('div_avatar').onclick = () => {  // as logout btn
 };
 
 // Part 3: chat control
-const messages = $$('messages');  // todo: 用store每个对话保存为一组记录，便于切换
+const chats = new Map();  // username => [messages]
 const emojis = $$('emojis');
 const input = $$('input');
-let receiver;
+const messages = $$('messages');  // 当前窗口的消息
+let receiver;                     // 当前窗口的发送对象
 
-class message { // TODO: 需要改善
-  constructor(sender, receiver, content) {
-    console.log('construct a message');
-    this.sender = sender;
-    this.receiver = receiver;
-    this.content = content;
-
-    // replace [emoji:..] with <img...
-    let match;
-    let result = this.content;
-    let reg = /\[emoji:\d+\]/g;
-    while (match = reg.exec(this.content)) {
-      let emoji_index = match[0].slice(7, -1);
-      let emoji_amount = emojis.children.length;
-      if (emoji_index <= emoji_amount) {
-        result = result.replace(match[0], '<img class="emoji" src="data/emoji/' + emoji_index + '.gif" />');
-      }
+// FIXME: 需要改善
+function message2escape(content) {  // RAW to DB-format
+  // replace [emoji:..] with <img...
+  let match;
+  let result = content;
+  let reg = /\[emoji:\d+\]/g;
+  while (match = reg.exec(content)) {
+    let emoji_index = match[0].slice(7, -1);
+    let emoji_amount = emojis.children.length;
+    if (emoji_index <= emoji_amount) {
+      result = result.replace(match[0], '<img class="emoji" src="data/emoji/' + emoji_index + '.gif" />');
     }
-    this.content = result;
   }
-
-  get_formated_message() {
-    let message = document.createElement('p');
-    message.className = 'right';
-    message.innerHTML = '<div class="avatar">' +
-        '<img alt="' + this.sender + '" src=' + $$('user_avatar').src + ' />' + '</div>' +
-        '<div class="msg">' + ' <div class="tri"></div>' +
-        '<div class="msg_inner">' + this.content + '</div>' + ' </div>';
-    return message;
-  }
+  return result;
+}
+function message2html(content, sender) {  // DB-format to HTML
+  let message = document.createElement('p');
+  message.className = 'right';
+  message.innerHTML = '<div class="avatar">' +
+      '<img alt="' + sender + '" src=' + $$('user_avatar').src + ' />' + '</div>' +
+      '<div class="msg">' + ' <div class="tri"></div>' +
+      '<div class="msg_inner">' + content + '</div>' + ' </div>';
+  return message;
 }
 
-socket.on('append_to_chat', (message) => {
-  // if receiver is chatting exatly with sender, then append to chat window
-  let formated = message.formated;
-  let target = message.receiver;
-
-  console.log('is chatting with ' + receiver);
-  console.log('receiver is ' + target);
-  if (target === receiver) {
-    let tmp = document.createElement('div');
-    tmp.innerHTML = formated.replace('class="right"', " ");
-    messages.appendChild(tmp.firstChild);
+socket.on('chat:message', (msg) => {
+  // 1.存入chats中
+  // 2.如果是当前目标，同时加入messages中
+  console.log('message received from ' + msg.sender + ' to ' + msg.receiver);
+  if (msg.receiver === receiver) {
+    let div = document.createElement('div');
+    div.innerHTML = message2html(msg.content, msg.sender);
+    messages.appendChild(div.firstChild); // FIXME: or use <p> ?
   }
 });
-$$('select_emoji').addEventListener('click', (evt) => {
-  emojis.style.display = 'block';
-  evt.stopPropagation();
-}, false);
-$$('send').onclick = () => {
-  console.log('send message to ' + receiver);
 
-  let message = new message(user, receiver, input.value);
+$$('send').onclick = () => {
+  console.log('message to sent to ' + receiver + ' from ' + user);
+
+  let msg_escape = message2escape(input.value);
+  let msg_html = message2html(input.value);
+  messages.appendChild(msg_html);
   input.value = '';
 
-  let formated = message.get_formated_message();
-  messages.appendChild(formated);
-
-  socket.emit('chat', {
-    sender: message.sender,
-    receiver: message.receiver,
-    formated: formated.outerHTML
+  socket.emit('chat:message', {
+    sender: user,
+    receiver: receiver,
+    formated: msg_escape
   });
 };
 
@@ -206,7 +196,7 @@ $$('open_file').addEventListener('change', function () {
     let formated = message.get_formated_message();
     messages.appendChild(formated);
 
-    socket.emit('chat', {
+    socket.emit('chat:message', {
       sender: message.sender,
       receiver: message.receiver,
       formated: formated.outerHTML
@@ -218,22 +208,31 @@ $$('select_image').onclick = () => {
   $("#open_file").trigger("click");
 };
 
+$$('select_emoji').addEventListener('click', (evt) => {
+  emojis.style.display = 'block';
+  evt.stopPropagation();
+}, false);
+socket.on('emoji:list', (data) => {
+  for(let i = 1 ; i <= data.length; ++i) {
+    let emoji_item = document.createElement('img');
+    emoji_item.src = url_base + data[i];
+    emoji_item.onclick = () => {
+      input.value += '[emoji:' + data[i] + ']';
+      emojis.style.display = 'none';
+    };
+    emojis.appendChild(emoji_item);
+  }
+});
+
 // Finally: main start
 /* init emoji */
-for(let i = 1 ; i <= 5; ++i) { // TODO: 不能这样写死
-  let emoji_item = document.createElement('img');
-  emoji_item.src = 'data/emoji/' + i + '.gif';
-  emoji_item.title = i;
-  emoji_item.onclick = () => {
-    input.value += '[emoji:' + i + ']';
-    emojis.style.display = 'none';
-  };
-  emojis.appendChild(emoji_item);
-}
+socket.emit('emoji:list');
 /* auto login */
+authinfo = store.get('authinfo'); // 用户登陆信息 { username: str, password: str }
+user = authinfo ? authinfo.username : null; // 暂存用户名
 if(authinfo) {
   console.log('[Init] try auto login');
   socket.emit('login', authinfo);
 }
-/* ok, now show body*/
+/* ok, now show HTML body*/
 $$('body').style.visibility = 'visible';

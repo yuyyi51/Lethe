@@ -1,0 +1,19 @@
+user = {
+  _id: int,
+  username: str,
+  password: str,
+  avatar: str,
+}
+
+chat = {
+  _id: int,
+  members: [@user],     // 元素通常为两个user_id
+  messages: [message],
+}
+
+message = {
+  _id: int,
+  sender: @user,
+  content: str,
+  timestamp: datetime,
+}
