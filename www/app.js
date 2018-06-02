@@ -5,6 +5,7 @@ const socket = io.connect();
 socket.on('disconnect', () => { socket.open(); });
 let url_base = socket.io.uri; // 'http://localhost:3000'
 let authinfo, user;
+let upload_image = {};
 
 // Part 2: login status control
 function change_login_status(status) {
@@ -172,6 +173,38 @@ $$('send').onclick = () => {
 };
 
 // Part 3: picture-related control
+socket.on('picture:query', (res) => {
+  if (res){
+    //图片已存在，发送消息
+    console.log('image exists');
+
+    //TODO: 发送图片消息
+
+    upload_image = {};
+  }
+  else {
+    //图片不存在，上传图片
+    console.log('image not exists');
+    socket.emit('picture:upload', upload_image);
+  }
+});
+
+socket.on('picture:upload', (res) => {
+  if (res){
+    //上传成功，发送消息
+    console.log('upload success');
+
+    //TODO: 发送图片消息
+
+    upload_image = {};
+  }
+  else {
+    //上传出错
+    console.log('upload fail');
+    upload_image = {};
+  }
+});
+
 $$('open_file').addEventListener('change', function () {
   if (this.files.length === 0) return;
   let image = this.files[0];
@@ -179,6 +212,8 @@ $$('open_file').addEventListener('change', function () {
     alert('this is not a image file.');
     return;
   }
+  console.log(image);
+  upload_image.suffix = image.name.toLowerCase().split('.').splice(-1)[0];
   let reader = new FileReader();
   if (!reader) {
     console.log('error init FileReader.');
@@ -186,23 +221,31 @@ $$('open_file').addEventListener('change', function () {
   }
   reader.onload = (evt) => {
     console.log('send image to ' + receiver);
+    //console.log(evt.srcElement.result);
+    upload_image.md5 = SparkMD5.hash(evt.srcElement.result);
+    socket.emit('picture:query', {md5: upload_image.md5});
+    upload_image.pic = evt.srcElement.result;
+    //console.log(upload_image);
 
     let img = document.createElement('img');
-    img.src = evt.receiver.result;
+    img.src = evt.srcElement.result;
     img.style.maxHeight = '99%';
     img.style.maxWidth = '99%';
-
+    /*
     let message = new message(user, receiver, img.outerHTML);
     let formated = message.get_formated_message();
     messages.appendChild(formated);
-
+    */
+    /*
     socket.emit('chat:message', {
       sender: message.sender,
       receiver: message.receiver,
       formated: formated.outerHTML
     });
+    */
   };
   reader.readAsDataURL(image);
+  $$('open_file').value = "";
 }, false);
 $$('select_image').onclick = () => {
   $("#open_file").trigger("click");
@@ -232,7 +275,7 @@ authinfo = store.get('authinfo'); // 用户登陆信息 { username: str, passwor
 user = authinfo ? authinfo.username : null; // 暂存用户名
 if(authinfo) {
   console.log('[Init] try auto login');
-  socket.emit('login', authinfo);
+  socket.emit('user:login', authinfo);
 }
 /* ok, now show HTML body*/
 $$('body').style.visibility = 'visible';

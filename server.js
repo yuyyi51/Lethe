@@ -128,14 +128,31 @@ io.on('connection', (socket) => {
   // on: { md5: str }
   // emit: uri
   socket.on('picture:query', (data) => {
-
+    //console.log(data);
+    db.check_image_md5(data, (res) => {
+      socket.emit('picture:query', res);
+    });
   });
 
   // 上传图片
-  // on: { pic: str(base64) }
+  // on: { pic: str(base64), suffix: str, md5: str }
   // emit: uri
   socket.on('picture:upload', (data) => {
-
+    //存储文件
+    //console.log(data);
+    let filename = data.md5 + '.' + data.suffix;
+    let imagebuffer = new Buffer(data.pic.replace(/^data:image\/\w+;base64,/, ""), 'base64');
+    let wstream = fs.createWriteStream(config.image.path + filename, {
+      flags : 'w',
+      encoding: 'binary'
+    });
+    wstream.on('open', () => {
+      wstream.write(imagebuffer);
+      wstream.end();
+    });
+    db.upload_image({md5: data.md5, suffix: data.suffix}, (res) => {
+      socket.emit('picture:upload', res);
+    });
   });
 
   // 查询预定义表情符号列表

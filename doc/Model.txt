@@ -17,3 +17,9 @@ message = {
   content: str,
   timestamp: datetime,
 }
+
+image = {
+  _id: int,
+  md5: str,
+  suffix: str
+}
