@@ -26,7 +26,7 @@ function change_login_status(status) {
 $$('btn_register').onclick = () => {
   authinfo = {
     username: $$('username').value,
-    password: $$('password').value
+    password: SparkMD5.hash($$('password').value)
   };
   socket.emit('user:register', authinfo);
 };
@@ -39,7 +39,7 @@ socket.on('user:register', (res) => {
 $$('btn_login').onclick = () => {
   authinfo = {
     username: $$('username').value,
-    password: $$('password').value
+    password: SparkMD5.hash($$('password').value)
   };
   socket.emit('user:login', authinfo);
 };

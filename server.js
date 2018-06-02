@@ -3,6 +3,7 @@ const app = express();
 const http = require('http').Server(app);
 const io = require('socket.io')(http);
 const fs = require('fs');
+const SparkMD5 = require('spark-md5');
 
 const config = require('./lib/config');
 const mongodb = require('./lib/db');
@@ -35,6 +36,7 @@ io.on('connection', (socket) => {
   // on:    { username: str, password: str }
   // emit:  bool
   socket.on('user:register', (data) => {
+    data.password = SparkMD5.hash(config.salt + data.password + config.salt);
     db.register(data, (res) => {
       console.log(data.username + " register " +
           (res === true ? "succeed." : "failed."));
@@ -46,6 +48,7 @@ io.on('connection', (socket) => {
   // on:    { username: str, password: str }
   // emit:  { user_id: str, username: str, avatar: uri }
   socket.on('user:login', (data) => {
+    data.password = SparkMD5.hash(config.salt + data.password + config.salt);
     db.login(data, (res) => {
       if (res === true) {
         socket_user.set(socket.id, data.username);
