@@ -3,9 +3,12 @@ function $$(id) { return document.getElementById(id); }
 
 const socket = io.connect();
 socket.on('disconnect', () => { socket.open(); });
-let url_base = socket.io.uri; // 'http://localhost:3000'
+//let url_base = socket.io.uri; // 'http://localhost:3000'
 let authinfo, user;
 let upload_image = {};
+let change_avater = false;
+let avater_md5 = null;
+let url_base = 'D://images/';
 
 // Part 2: login status control
 function change_login_status(status) {
@@ -51,6 +54,7 @@ socket.on('user:login', (res) => {
   }
 
   change_login_status(true);
+    socket.emit('user:get_avatar',{user: authinfo.username});
   socket.emit('user:get_userinfo', authinfo, (userinfo) => {
     let user = userinfo;
     console.log(user);
@@ -60,8 +64,11 @@ socket.on('user:login', (res) => {
 
     let div_user_username = $$('user_username');
     div_user_username.textContent = user.username;
+
+    /*
     let img_user_avatar = $$('user_avatar');
-    img_user_avatar.src = 'data/avatar/' + user.username + '.png';
+    mg_user_avatar.src = 'data/avatar/' + user.username + '.png';
+    */
 
     let ul_friends = $$('friends');
     let onclick_friend = function () {
@@ -108,12 +115,44 @@ socket.on('user:login', (res) => {
     }
   });
 });
-$$('div_avatar').onclick = () => {  // as logout btn
+$$('log_out').onclick = () => {  // as logout btn
   if (confirm('are you sure to logout?')) {
     change_login_status(false);
   }
 };
+$$('user_avatar').onclick = () => {
+  $("#change_avatar").trigger("click");
+};
+$$('change_avatar').addEventListener('change', function () {
+    if (this.files.length === 0) return;
+    let image = this.files[0];
+    if(!image.type.startsWith('image')) {
+        alert('this is not a image file.');
+        return;
+    }
+    upload_image.suffix = image.name.toLowerCase().split('.').splice(-1)[0];
+    let reader = new FileReader();
+    if (!reader) {
+        console.log('error init FileReader.');
+        return;
+    }
+    change_avater = true;
+    reader.onload = (evt) => {
+        //console.log(evt.srcElement.result);
+        upload_image.md5 = SparkMD5.hash(evt.srcElement.result);
+        avater_md5 = upload_image.md5;
+        socket.emit('picture:query', {md5: upload_image.md5});
+        upload_image.pic = evt.srcElement.result;
+        //console.log(upload_image);
 
+        let img = document.createElement('img');
+        img.src = evt.srcElement.result;
+        img.style.maxHeight = '99%';
+        img.style.maxWidth = '99%';
+    };
+    reader.readAsDataURL(image);
+    $$('change_avatar').value = "";
+});
 // Part 3: chat control
 const chats = new Map();  // username => [messages]
 const emojis = $$('emojis');
@@ -157,6 +196,17 @@ socket.on('chat:message', (msg) => {
   }
 });
 
+socket.on('user:get_avatar', (res) => {
+  console.log(res);
+  let path = 'data/avatar/user.png';
+  if (res !== null){
+    path = url_base + res ;
+  }
+
+  let img_user_avatar = $$('user_avatar');
+  img_user_avatar.src = path;
+});
+
 $$('send').onclick = () => {
   console.log('message to sent to ' + receiver + ' from ' + user);
 
@@ -177,7 +227,12 @@ socket.on('picture:query', (res) => {
   if (res){
     //图片已存在，发送消息
     console.log('image exists');
-
+    if (change_avater){
+        socket.emit('user:avatar',{user: authinfo.username, md5: avater_md5});
+        change_avater = false;
+        avater_md5 = null;
+        return
+    }
     //TODO: 发送图片消息
 
     upload_image = {};
@@ -202,6 +257,11 @@ socket.on('picture:upload', (res) => {
     //上传出错
     console.log('upload fail');
     upload_image = {};
+  }
+  if (change_avater){
+    socket.emit('user:avatar',{user: authinfo.username, md5: avater_md5});
+    change_avater = false;
+    avater_md5 = null;
   }
 });
 

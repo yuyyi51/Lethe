@@ -61,12 +61,22 @@ io.on('connection', (socket) => {
   });
 
   // desc:  更换头像
-  // on:    { avatar: str(base64) }
-  // emit:  { avatar: uri }
+  // on:    { user: str, md5: str }
+  // emit:  { avatar: url }
   socket.on('user:avatar', (data) => {
-
+    db.change_avatar(data.user, data.md5, (res) => {
+      socket.emit('user:avatar', res);
+    });
   });
-
+    // desc:  获取头像
+    // on:    { user: str }
+    // emit:  { avatar: uri }
+  socket.on('user:get_avatar', (data) => {
+    console.log(data);
+    db.get_avatar(data.user, (res) => {
+      socket.emit('user:get_avatar', res);
+    });
+  });
   // desc:  搜索用户
   // on:    { username: str }
   // emit:  { username: str: avatar: uri }
