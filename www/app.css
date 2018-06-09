@@ -257,3 +257,10 @@ aside ul {
         #emojis img:hover {
             background-color:cornflowerblue;
         }
+.popover-body {
+    overflow: scroll;
+    max-height: 200px;
+}
+.btn-default{
+    background-color: white;
+}
