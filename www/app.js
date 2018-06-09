@@ -1,6 +1,5 @@
 // Part 1: public util function & globals
 function $$(id) { return document.getElementById(id); }
-
 const socket = io.connect();
 socket.on('disconnect', () => { socket.open(); });
 let url_base = socket.io.uri; // 'http://localhost:3000'
@@ -155,7 +154,6 @@ $$('change_avatar').addEventListener('change', function () {
 });
 // Part 3: chat control
 const chats = new Map();  // username => [messages]
-const emojis = $$('emojis');
 const input = $$('input');
 const messages = $$('messages');  // 当前窗口的消息
 let receiver;                     // 当前窗口的发送对象
@@ -163,16 +161,16 @@ let receiver;                     // 当前窗口的发送对象
 // FIXME: 需要改善
 function message2escape(content) {  // RAW to DB-format
   // replace [emoji:..] with <img...
-  let match;
+  //let match;
   let result = content;
-  let reg = /\[emoji:\d+\]/g;
+  /*let reg = /\[emoji:\d+\]/g;
   while (match = reg.exec(content)) {
     let emoji_index = match[0].slice(7, -1);
     let emoji_amount = emojis.children.length;
     if (emoji_index <= emoji_amount) {
       result = result.replace(match[0], '<img class="emoji" src="data/emoji/' + emoji_index + '.gif" />');
     }
-  }
+  }*/
   return result;
 }
 function message2html(content, sender) {  // DB-format to HTML
@@ -310,11 +308,14 @@ $$('open_file').addEventListener('change', function () {
 $$('select_image').onclick = () => {
   $("#open_file").trigger("click");
 };
-
+/*
 $$('select_emoji').addEventListener('click', (evt) => {
-  emojis.style.display = 'block';
-  evt.stopPropagation();
+  //emojis.style.display = 'block';
+  //evt.stopPropagation()
+  //$('[data-toggle="popover"]').popover('toggle');
 }, false);
+*/
+/*
 socket.on('emoji:list', (data) => {
   for(let i = 1 ; i <= data.length; ++i) {
     let emoji_item = document.createElement('img');
@@ -326,10 +327,10 @@ socket.on('emoji:list', (data) => {
     emojis.appendChild(emoji_item);
   }
 });
-
+*/
 // Finally: main start
 /* init emoji */
-socket.emit('emoji:list');
+//socket.emit('emoji:list');
 /* auto login */
 authinfo = store.get('authinfo'); // 用户登陆信息 { username: str, password: str }
 user = authinfo ? authinfo.username : null; // 暂存用户名
@@ -339,3 +340,115 @@ if(authinfo) {
 }
 /* ok, now show HTML body*/
 $$('body').style.visibility = 'visible';
+
+/*by Gouyiqin*/
+function add_emoji(e) {
+    $('#input').val( $('#input').val()+e.innerText);
+}
+function get_emoji_list() {
+    let emoji=
+        "😀\n" +
+        "😁\n" +
+        "😂\n" +
+        "😃\n" +
+        "😄\n" +
+        "😅\n" +
+        "😆\n" +
+        "😇\n" +
+        "😈\n" +
+        "😉\n" +
+        "😊\n" +
+        "😋\n" +
+        "😌\n" +
+        "😍\n" +
+        "😎\n" +
+        "😏\n" +
+        "😐\n" +
+        "😑\n" +
+        "😒\n" +
+        "😓\n" +
+        "😔\n" +
+        "😕\n" +
+        "😖\n" +
+        "😗\n" +
+        "😘\n" +
+        "😙\n" +
+        "😚\n" +
+        "😛\n" +
+        "😜\n" +
+        "😝\n" +
+        "😞\n" +
+        "😟\n" +
+        "😠\n" +
+        "😡\n" +
+        "😢\n" +
+        "😣\n" +
+        "😤\n" +
+        "😥\n" +
+        "😦\n" +
+        "😧\n" +
+        "😨\n" +
+        "😩\n" +
+        "😪\n" +
+        "😫\n" +
+        "😬\n" +
+        "😭\n" +
+        "😮\n" +
+        "😯\n" +
+        "😰\n" +
+        "😱\n" +
+        "😲\n" +
+        "😳\n" +
+        "😴\n" +
+        "😵\n" +
+        "😶\n" +
+        "😷\n" +
+        "😸\n" +
+        "😹\n" +
+        "😺\n" +
+        "😻\n" +
+        "😼\n" +
+        "😽\n" +
+        "😾\n" +
+        "😿\n" +
+        "🙀\n" +
+        "🙅\n" +
+        "🙆\n" +
+        "🙇\n" +
+        "🙈\n" +
+        "🙉\n" +
+        "🙊\n" +
+        "🙋\n" +
+        "🙌\n" +
+        "🙍\n" +
+        "🙎\n" +
+        "🙏";
+    let emojilist=[];
+    //console.log(emoji.split("\n").length)
+    for(let i=0;i<emoji.split("\n").length;i=i+4)
+    {
+        emojilist+="<div>"+
+            "  <button type=\"button\" class=\"btn btn-default\" onclick=\"add_emoji(this)\">" +emoji.split("\n")[i]+
+            "</button>\n" +
+            "  <button type=\"button\" class=\"btn btn-default\" onclick=\"add_emoji(this)\">" +emoji.split("\n")[i+1]+
+            "</button>\n" +
+            "  <button type=\"button\" class=\"btn btn-default\" onclick=\"add_emoji(this)\">" +emoji.split("\n")[i+2]+
+            "</button>\n" +
+            "  <button type=\"button\" class=\"btn btn-default\" onclick=\"add_emoji(this)\">" +emoji.split("\n")[i+3]+
+            "</button>\n" +
+                "</div>";
+    }
+    return emojilist;
+}
+$(document).ready(function () {
+    $('#select_emoji').popover(
+        {
+            trigger:'click',
+            title:"Choose emoji",
+            html:true,
+            content:get_emoji_list(),
+            placement:'top',
+            container:'body'
+        }
+    )
+})
