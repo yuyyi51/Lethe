@@ -3,12 +3,12 @@ function $$(id) { return document.getElementById(id); }
 
 const socket = io.connect();
 socket.on('disconnect', () => { socket.open(); });
-//let url_base = socket.io.uri; // 'http://localhost:3000'
+let url_base = socket.io.uri; // 'http://localhost:3000'
+let image_base = '/data/images/';
 let authinfo, user;
 let upload_image = {};
 let change_avater = false;
 let avater_md5 = null;
-let url_base = 'D://images/';
 
 // Part 2: login status control
 function change_login_status(status) {
@@ -200,7 +200,7 @@ socket.on('user:get_avatar', (res) => {
   console.log(res);
   let path = 'data/avatar/user.png';
   if (res !== null){
-    path = url_base + res ;
+    path = url_base + image_base + res ;
   }
 
   let img_user_avatar = $$('user_avatar');
