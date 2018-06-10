@@ -1,3 +1,4 @@
+
 var Interface = function(name) {
     //arguments为实际传进来的参数
     if(arguments.length != 2) throw new Error("创建的接口不符合标准,必须有俩个参数,第二个参数是接口的方法");
@@ -42,12 +43,27 @@ TextMessageBuilder.prototype.createMessage = function (plain_message, sender, ta
     return data;
 };
 
-TextMessageBuilder.prototype.createHTML = function (message) {
-
+TextMessageBuilder.prototype.createHTML = function (message, selfname) {
+    let content = message.message.content;
+    let sender = content.sender;
+    let html = document.createElement('article');
+    if (selfname === sender)
+        html.className = 'right';
+    html.innerHTML = '<div class="avatar">' +
+        '<img alt="' + sender + '" src=' + $$('avatar:'+sender).src + ' />' + '</div>' +
+        '<div class="msg">' + ' <div class="tri"></div>' +
+        '<div class="msg_inner">' + content + '</div>' + ' </div>';
+    return html;
 };
 
 TextMessageBuilder.prototype.createHTMLFromPlain = function (plain_message) {
-
+    let html = document.createElement('article');
+    html.className = 'right';
+    html.innerHTML = '<div class="avatar">' +
+        '<img alt="user" src=' + $$('user_avatar').src + ' />' + '</div>' +
+        '<div class="msg">' + ' <div class="tri"></div>' +
+        '<div class="msg_inner">' + plain_message + '</div>' + ' </div>';
+    return html;
 };
 
 var ImageMessageBuilder = function () {
@@ -68,11 +84,26 @@ ImageMessageBuilder.prototype.createMessage = function(plain_message, sender, ta
     return data;
 };
 
-ImageMessageBuilder.prototype.createHTML = function (message) {
-
+ImageMessageBuilder.prototype.createHTML = function (message, selfname) {
+    let image_url = message.content.match(/\[img:(\S*)\]/)[1];
+    let sender = message.sender;
+    let html = document.createElement('article');
+    if (selfname === sender)
+        html.className = 'right';
+    html.innerHTML = '<div class="avatar">' +
+        '<img alt="user" src=' + $$('avatar:'+sender).src + ' />' + '</div>' +
+        '<div class="msg">' + ' <div class="tri"></div>' +
+        '<div class="msg_inner">' + '<img style="max-width: 600px" src=' + url_base + image_base + image_url + ' />' + '</div>' + ' </div>';
+    return html;
 };
 
 ImageMessageBuilder.prototype.createHTMLFromPlain = function(image_url){
-
+    let html = document.createElement('article');
+    html.className = 'right';
+    html.innerHTML = '<div class="avatar">' +
+        '<img alt="user" src=' + $$('user_avatar').src + ' />' + '</div>' +
+        '<div class="msg">' + ' <div class="tri"></div>' +
+        '<div class="msg_inner">' + '<img style="max-width: 600px" src=' + url_base + image_base + image_url + ' />' + '</div>' + ' </div>';
+    return html;
 };
 

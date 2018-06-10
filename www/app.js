@@ -174,7 +174,7 @@ function message2escape(content) {  // RAW to DB-format
   return result;
 }
 function message2html(content, sender) {  // DB-format to HTML
-  let message = document.createElement('p');
+  let message = document.createElement('article');
   message.className = 'right';
   message.innerHTML = '<div class="avatar">' +
       '<img alt="' + sender + '" src=' + $$('user_avatar').src + ' />' + '</div>' +
@@ -308,13 +308,8 @@ $$('open_file').addEventListener('change', function () {
 $$('select_image').onclick = () => {
   $("#open_file").trigger("click");
 };
-/*
-$$('select_emoji').addEventListener('click', (evt) => {
-  //emojis.style.display = 'block';
-  //evt.stopPropagation()
-  //$('[data-toggle="popover"]').popover('toggle');
-}, false);
-*/
+
+
 /*
 socket.on('emoji:list', (data) => {
   for(let i = 1 ; i <= data.length; ++i) {
@@ -451,4 +446,26 @@ $(document).ready(function () {
             container:'body'
         }
     )
+});
+
+// $$('select_emoji').addEventListener('click', (evt) => {
+//     //emojis.style.display = 'block';
+//     //evt.stopPropagation()
+//     //$('[data-toggle="popover"]').popover('toggle');
+//
+// }, false);
+
+//弹窗隐藏
+document.body.addEventListener('click', function (event)
+{
+    var target = $(event.target);
+    if (!target.hasClass('popover') //弹窗内部点击不关闭
+        && target.parent('.popover-content').length === 0
+        && target.parent('.popover-title').length === 0
+        && target.parent('.popover').length === 0
+        && target.data("toggle") !== "popover"
+        && (target.id != "select_emoji"))
+    {
+        $('#select_emoji').popover('hide');
+    }
 });
