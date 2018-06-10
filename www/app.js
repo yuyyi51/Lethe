@@ -66,7 +66,7 @@ socket.on('user:login', (res) => {
   socket.emit('user:get_userinfo', authinfo, (userinfo) => {
     let user = userinfo;
     console.log(user);
-
+    console.log('12321');
     // use authinfo info to build UI:
     // 1. aside: self-profile & friends
 
@@ -247,6 +247,7 @@ socket.on('picture:query', (res) => {
         socket.emit('user:avatar',{user: authinfo.username, md5: avater_md5});
         change_avater = false;
         avater_md5 = null;
+        window.location.reload();
         return
     }
     //发送图片消息
@@ -266,7 +267,13 @@ socket.on('picture:upload', (res) => {
   if (res){
     //上传成功，发送消息
     console.log('upload success');
-
+  if (change_avater){
+      socket.emit('user:avatar',{user: authinfo.username, md5: avater_md5});
+      change_avater = false;
+      avater_md5 = null;
+      window.location.reload();
+      return
+  }
     //发送图片消息
     let imagemessage = '[img:' + upload_image.md5 + '.' + upload_image.suffix + ']';
     let imagehtml = MessageDirector.GetInstance.createHTMLFromPlain(imagemessage);
