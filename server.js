@@ -28,6 +28,10 @@ io.on('connection', (socket) => {
   });
 
 
+  function getUsername(){
+    return socket_user.get(socket_user.id);
+  }
+
   /*****************/
   /* Part 1 : User */
   /*****************/
