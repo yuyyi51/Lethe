@@ -73,7 +73,7 @@ var ImageMessageBuilder = function () {
 ImageMessageBuilder.prototype.createMessage = function(plain_message, sender, target){
     let message = {
         sender: sender,
-        content: '[img:' + plain_message + ']',
+        content: plain_message,
         timestamp: new Date()
     };
     let data = {
@@ -97,8 +97,9 @@ ImageMessageBuilder.prototype.createHTML = function (message, selfname) {
     return html;
 };
 
-ImageMessageBuilder.prototype.createHTMLFromPlain = function(image_url){
+ImageMessageBuilder.prototype.createHTMLFromPlain = function(image){
     let html = document.createElement('article');
+    let image_url = image.match(/\[img:(\S*)\]/)[1];
     html.className = 'right';
     html.innerHTML = '<div class="avatar">' +
         '<img alt="user" src=' + $$('user_avatar').src + ' />' + '</div>' +
@@ -107,3 +108,47 @@ ImageMessageBuilder.prototype.createHTMLFromPlain = function(image_url){
     return html;
 };
 
+var MessageDirector = function () {
+    this.textBuilder = new TextMessageBuilder();
+    this.imageBuilder = new ImageMessageBuilder();
+};
+
+MessageDirector.prototype.createMessage = function (content) {
+    if (content.match(/\[img:(\S*)\]/) !== null){
+        //image
+        return this.imageBuilder.createMessage(content);
+    }
+    else {
+        return this.textBuilder.createMessage(content);
+    }
+};
+
+MessageDirector.prototype.createHTML = function (message, self) {
+    if (message.message.content.match(/\[img:(\S*)\]/) !== null) {
+        //image
+        return this.imageBuilder.createHTML(message, self);
+    }
+    else{
+        return this.textBuilder.createMessage(message, self);
+    }
+};
+
+MessageDirector.prototype.createHTMLFromPlain = function (content) {
+    if (content.match(/\[img:(\S*)\]/) !== null){
+        //image
+        return this.imageBuilder.createHTMLFromPlain(content);
+    }
+    else {
+        return this.textBuilder.createHTMLFromPlain(content);
+    }
+};
+
+MessageDirector.GetInstance = (function () {
+    var instance = null;
+    return function () {
+        if ( !instance ) {
+            instance = new MessageDirector();
+        }
+        return instance;
+    }();
+})();

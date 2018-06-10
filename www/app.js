@@ -2,12 +2,20 @@
 function $$(id) { return document.getElementById(id); }
 const socket = io.connect();
 socket.on('disconnect', () => { socket.open(); });
-let url_base = socket.io.uri; // 'http://localhost:3000'
-let image_base = '/data/images/';
+var url_base = socket.io.uri; // 'http://localhost:3000'
+var image_base = '/data/images/';
 let authinfo, user;
 let upload_image = {};
 let change_avater = false;
 let avater_md5 = null;
+
+function appendMessage(html) {
+    $$('messages').appendChild(html);
+}
+
+function isImage(content) {
+    return content.match(/\[img:.*\]/) !== null;
+}
 
 // Part 2: login status control
 function change_login_status(status) {
@@ -22,6 +30,7 @@ function change_login_status(status) {
     store.remove('authinfo');
     $$('entry').style.display = 'block';
     $$('container').style.visibility = 'hidden';
+    window.location.reload();
   }
 }
 
@@ -203,21 +212,30 @@ socket.on('user:get_avatar', (res) => {
 
   let img_user_avatar = $$('user_avatar');
   img_user_avatar.src = path;
+  let temp = document.createElement('img');
+  temp.id = "avatar:" + authinfo.username;
+  temp.style.display = 'none';
+  img_user_avatar.appendChild(temp);
+  console.log($$("avatar:" + authinfo.username));
 });
 
 $$('send').onclick = () => {
   console.log('message to sent to ' + receiver + ' from ' + user);
-
-  let msg_escape = message2escape(input.value);
-  let msg_html = message2html(input.value);
+  let msg_html = MessageDirector.GetInstance.createHTMLFromPlain(input.value);
+  //let msg_escape = message2escape(input.value);
+  //let msg_html = message2html(input.value);
   messages.appendChild(msg_html);
+
+  //let builder_msg = new TextMessageBuilder().createHTMLFromPlain(input.value);
+  //messages.appendChild(builder_msg);
+
   input.value = '';
 
-  socket.emit('chat:message', {
+  /*socket.emit('chat:message', {
     sender: user,
     receiver: receiver,
     formated: msg_escape
-  });
+  });*/
 };
 
 // Part 3: picture-related control
@@ -231,8 +249,10 @@ socket.on('picture:query', (res) => {
         avater_md5 = null;
         return
     }
-    //TODO: 发送图片消息
-
+    //发送图片消息
+      let imagemessage = '[img:' + upload_image.md5 + '.' + upload_image.suffix + ']';
+      let imagehtml = MessageDirector.GetInstance.createHTMLFromPlain(imagemessage);
+      appendMessage(imagehtml);
     upload_image = {};
   }
   else {
@@ -247,8 +267,10 @@ socket.on('picture:upload', (res) => {
     //上传成功，发送消息
     console.log('upload success');
 
-    //TODO: 发送图片消息
-
+    //发送图片消息
+    let imagemessage = '[img:' + upload_image.md5 + '.' + upload_image.suffix + ']';
+    let imagehtml = MessageDirector.GetInstance.createHTMLFromPlain(imagemessage);
+    appendMessage(imagehtml);
     upload_image = {};
   }
   else {
