@@ -458,13 +458,14 @@ $(document).ready(function () {
 //弹窗隐藏
 document.body.addEventListener('click', function (event)
 {
+
     var target = $(event.target);
     if (!target.hasClass('popover') //弹窗内部点击不关闭
         && target.parent('.popover-content').length === 0
         && target.parent('.popover-title').length === 0
         && target.parent('.popover').length === 0
         && target.data("toggle") !== "popover"
-        && (target.id != "select_emoji"))
+        && target.attr("class") !== "btn btn-default")
     {
         $('#select_emoji').popover('hide');
     }
