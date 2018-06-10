@@ -338,8 +338,32 @@ $$('body').style.visibility = 'visible';
 
 /*by Gouyiqin*/
 function add_emoji(e) {
-    $('#input').val( $('#input').val()+e.innerText);
+    //$('#input').val( $('#input').val()+e.innerText);
+    //IE
+    if (document.selection) {
+        let sel = document.selection.createRange();
+        sel.text = e.innerText;
+    }
+    //Else
+    else if
+    (typeof $$('input').selectionStart === 'number' && typeof $$('input').selectionEnd === 'number') {
+        let startPos = $$('input').selectionStart,
+            endPos = $$('input').selectionEnd,
+            cursorPos = startPos,
+            str = $$('input').value;
+        $$('input').value = str.substring(0, startPos) + e.innerText + str.substring(endPos, str.length);
+        cursorPos += e.innerText.length;
+        $$('input').selectionStart = $$('input').selectionEnd = cursorPos
+    }
+    //无光标位置
+    else {
+        $$('input').value += str;
+    }
 }
+function insertText(obj,str) {
+
+}
+
 function get_emoji_list() {
     let emoji=
         "😀\n" +
