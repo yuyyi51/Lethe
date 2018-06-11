@@ -122,17 +122,21 @@ io.on('connection', (socket) => {
   });
 
   // desc:  在某个会话中新增消息
-  // on:    { chat_id: str, sender: str, receiver: str, content: str }
+  // on:    {
+    // sender: str,
+    // target: str,
+    // message: {
+    // 	  sender: str,
+    //    content: str,
+    //    timestamp: datetime }
+    // }
   // emit:  bool
   socket.on('chat:message', (data) => {
     db.append_chat_history(data);
-    let recv_sock = user_socket.get(data.receiver);
-    if (recv_sock !== undefined) {
-      recv_sock.emit('chat:message', {
-        sender: data.sender,
-        receiver: data.receiver,
-        content: data.content
-      });
+    let recv_sock = user_socket.get(data.target);
+    if (recv_sock !== undefined){
+      //目标在线
+      recv_sock.emit('chat:message', data);
     }
   });
 
@@ -174,12 +178,4 @@ io.on('connection', (socket) => {
     });
 
   });
-
-  // 查询预定义表情符号列表
-  // on: null
-  // emit: [uri]
-  socket.on('emoji:list', (data) => {
-
-  });
-
 });

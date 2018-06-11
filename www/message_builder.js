@@ -45,7 +45,7 @@ TextMessageBuilder.prototype.createMessage = function (plain_message, sender, ta
 
 TextMessageBuilder.prototype.createHTML = function (message, selfname) {
     let content = message.message.content;
-    let sender = content.sender;
+    let sender = message.message.sender;
     let html = document.createElement('article');
     if (selfname === sender)
         html.className = 'right';
@@ -85,8 +85,8 @@ ImageMessageBuilder.prototype.createMessage = function(plain_message, sender, ta
 };
 
 ImageMessageBuilder.prototype.createHTML = function (message, selfname) {
-    let image_url = message.content.match(/\[img:(\S*)\]/)[1];
-    let sender = message.sender;
+    let image_url = message.message.content.match(/\[img:(\S*)\]/)[1];
+    let sender = message.message.sender;
     let html = document.createElement('article');
     if (selfname === sender)
         html.className = 'right';
@@ -113,13 +113,13 @@ var MessageDirector = function () {
     this.imageBuilder = new ImageMessageBuilder();
 };
 
-MessageDirector.prototype.createMessage = function (content) {
+MessageDirector.prototype.createMessage = function (content, sender, target) {
     if (content.match(/\[img:(\S*)\]/) !== null){
         //image
-        return this.imageBuilder.createMessage(content);
+        return this.imageBuilder.createMessage(content, sender, target);
     }
     else {
-        return this.textBuilder.createMessage(content);
+        return this.textBuilder.createMessage(content, sender, target);
     }
 };
 
@@ -129,7 +129,7 @@ MessageDirector.prototype.createHTML = function (message, self) {
         return this.imageBuilder.createHTML(message, self);
     }
     else{
-        return this.textBuilder.createMessage(message, self);
+        return this.textBuilder.createHTML(message, self);
     }
 };
 
