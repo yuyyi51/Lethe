@@ -8,6 +8,7 @@ let authinfo, user;
 let upload_image = {};
 let change_avater = false;
 let avater_md5 = null;
+let check_friend_avater = false;
 
 function appendMessage(html) {
     $$('messages').appendChild(html);
@@ -62,67 +63,30 @@ socket.on('user:login', (res) => {
   }
 
   change_login_status(true);
-    socket.emit('user:get_avatar',{user: authinfo.username});
+  let img = document.createElement('img');
+  img.style.display = 'none';
+  img.src = $$('user_avatar').src;
+  img.id = authinfo.username + '_avatar';
+  /*////////////////////////////////////////
+    let imgtest2 = document.createElement('img');
+    imgtest2.id = 'test1_avatar';
+    imgtest2.style.display = 'none';
+    imgtest2.src = '/data/avatar/user.png';
+    $$('user_avatar').appendChild(imgtest2);
+    //////////////////////////////////////*/
+  $$('user_avatar').appendChild(img);
+  socket.emit('user:get_avatar',{user: authinfo.username});
   socket.emit('user:get_userinfo', authinfo, (userinfo) => {
     let user = userinfo;
     console.log(user);
-
-    // use authinfo info to build UI:
-    // 1. aside: self-profile & friends
-
     let div_user_username = $$('user_username');
     div_user_username.textContent = user.username;
-
-    /*
-    let img_user_avatar = $$('user_avatar');
-    mg_user_avatar.src = 'data/avatar/' + user.username + '.png';
-    */
-
-    let ul_friends = $$('friends');
-    let onclick_friend = function () {
-      console.log(this.id + ' tag clicked');
-      let main = $$('main');
-      main.style.visibility = 'visible';
-      receiver = this.id.replace('friend_', '');
-      console.log(user + ' chats with ' + receiver);
-
-      // 2. main: retrieve history
-      let sel = { sender: user, receiver: receiver };
-      socket.emit('get_history', sel, (history) => {
-        console.log(history);
-        while (messages.firstChild) {
-          messages.removeChild(messages.firstChild);
-        }
-
-        for (i = 0; i < history.length; ++i) {
-          let message = history[i]; // formated pure text
-
-          // find the sender, if not sender, place message in the left
-          let search_result = message.search('alt="' + user + '"');
-          // if not found, then it's not the message we sent
-          if (search_result === -1) {
-            message = message.replace('class="right"', " ");
-          }
-          messages.innerHTML += message;
-        }
-      });
-    };
-
     if(user.friends) for (let i = 0; i < user.friends.length; ++i) {
-      let li_friend = document.createElement('li');
-      let friend_account = user.friends[i].account;
-      li_friend.id = 'friend_' + friend_account;
-      li_friend.innerHTML = '<div class="avatar">' +
-          '<img alt="avatar" id=' + friend_account + '_avatar src= "avatar/' + friend_account + '.png"/>' +
-          '</div >' +
-          '<div class="main_li">' +
-          '<div class="username">' + friend_account + '</div>' +
-          '</div >';
-      li_friend.onclick = onclick_friend;
-      ul_friends.appendChild(li_friend);
+      socket.emit('user:get_friends_avatar',{user: user.friends[i]});
     }
   });
 });
+
 $$('log_out').onclick = () => {  // as logout btn
   if (confirm('are you sure to logout?')) {
     change_login_status(false);
@@ -151,12 +115,6 @@ $$('change_avatar').addEventListener('change', function () {
         avater_md5 = upload_image.md5;
         socket.emit('picture:query', {md5: upload_image.md5});
         upload_image.pic = evt.srcElement.result;
-        //console.log(upload_image);
-
-        let img = document.createElement('img');
-        img.src = evt.srcElement.result;
-        img.style.maxHeight = '99%';
-        img.style.maxWidth = '99%';
     };
     reader.readAsDataURL(image);
     $$('change_avatar').value = "";
@@ -165,42 +123,61 @@ $$('change_avatar').addEventListener('change', function () {
 const chats = new Map();  // username => [messages]
 const input = $$('input');
 const messages = $$('messages');  // 当前窗口的消息
-let receiver;                     // 当前窗口的发送对象
-
-// FIXME: 需要改善
-function message2escape(content) {  // RAW to DB-format
-  // replace [emoji:..] with <img...
-  //let match;
-  let result = content;
-  /*let reg = /\[emoji:\d+\]/g;
-  while (match = reg.exec(content)) {
-    let emoji_index = match[0].slice(7, -1);
-    let emoji_amount = emojis.children.length;
-    if (emoji_index <= emoji_amount) {
-      result = result.replace(match[0], '<img class="emoji" src="data/emoji/' + emoji_index + '.gif" />');
-    }
-  }*/
-  return result;
-}
-function message2html(content, sender) {  // DB-format to HTML
-  let message = document.createElement('article');
-  message.className = 'right';
-  message.innerHTML = '<div class="avatar">' +
-      '<img alt="' + sender + '" src=' + $$('user_avatar').src + ' />' + '</div>' +
-      '<div class="msg">' + ' <div class="tri"></div>' +
-      '<div class="msg_inner">' + content + '</div>' + ' </div>';
-  return message;
-}
+//let receiver;                     // 当前窗口的发送对象
+let receiver = 'test2' ;      //测试用
 
 socket.on('chat:message', (msg) => {
   // 1.存入chats中
   // 2.如果是当前目标，同时加入messages中
-  console.log('message received from ' + msg.sender + ' to ' + msg.receiver);
-  if (msg.receiver === receiver) {
-    let div = document.createElement('div');
-    div.innerHTML = message2html(msg.content, msg.sender);
-    messages.appendChild(div.firstChild); // FIXME: or use <p> ?
-  }
+  //TODO: 判断发送者是否是当前聊天对象
+  appendMessage(MessageDirector.GetInstance.createHTML(msg, authinfo.username));
+});
+
+socket.on('user:get_friends_avatar', (data,res) => {
+    console.log(res);
+    let path = 'data/avatar/user.png';
+    if (res !== null){
+        path = url_base + image_base + res ;
+    }
+    let onclick_friend = function () {
+        console.log(this.id + ' tag clicked');
+        let main = $$('main');
+        main.style.visibility = 'visible';
+        receiver = this.id.replace('friend_', '');
+        console.log(user + ' chats with ' + receiver);
+
+        // 2. main: retrieve history
+        let sel = { sender: user, receiver: receiver };
+        socket.emit('chat:history', sel, (history) => {
+            console.log(history);
+            if(history == null){
+                alert('未找到聊天记录！');
+                return;
+            }
+            while (messages.firstChild) {
+                messages.removeChild(messages.firstChild);
+            }
+            for (var i = 0; i < history.messages.length; ++i) {
+                let tmpMessage = history.messages[i];
+                let msg_html = MessageDirector.GetInstance.createHTML(tmpMessage, user);
+                messages.appendChild(msg_html);
+            }
+        });
+    };
+    let friend_name = data;
+    let ul_friends = $$('friends');
+    let li_friend = document.createElement('li');
+    li_friend.id = 'friend_' + friend_name;
+    li_friend.style.height="60px";
+    li_friend.style.padding="10px";
+    li_friend.innerHTML = '<div class="avatar">' +
+        '<img alt="avatar" id=' + friend_name + '_avatar src= "/' + path + '"/>' +
+        '</div >' +
+        '<div class="main_li">' +
+        '<div class="username">' + friend_name + '</div>' +
+        '</div >';
+    li_friend.onclick = onclick_friend;
+    ul_friends.appendChild(li_friend);
 });
 
 socket.on('user:get_avatar', (res) => {
@@ -209,14 +186,10 @@ socket.on('user:get_avatar', (res) => {
   if (res !== null){
     path = url_base + image_base + res ;
   }
-
   let img_user_avatar = $$('user_avatar');
   img_user_avatar.src = path;
-  let temp = document.createElement('img');
-  temp.id = "avatar:" + authinfo.username;
-  temp.style.display = 'none';
-  img_user_avatar.appendChild(temp);
-  console.log($$("avatar:" + authinfo.username));
+  $$(authinfo.username+'_avatar').src = path;
+  console.log($$(authinfo.username+'_avatar'));
 });
 
 $$('send').onclick = () => {
@@ -229,13 +202,8 @@ $$('send').onclick = () => {
   //let builder_msg = new TextMessageBuilder().createHTMLFromPlain(input.value);
   //messages.appendChild(builder_msg);
 
+  socket.emit('chat:message', MessageDirector.GetInstance.createMessage(input.value, authinfo.username, receiver));
   input.value = '';
-
-  /*socket.emit('chat:message', {
-    sender: user,
-    receiver: receiver,
-    formated: msg_escape
-  });*/
 };
 
 // Part 3: picture-related control
@@ -253,6 +221,7 @@ socket.on('picture:query', (res) => {
       let imagemessage = '[img:' + upload_image.md5 + '.' + upload_image.suffix + ']';
       let imagehtml = MessageDirector.GetInstance.createHTMLFromPlain(imagemessage);
       appendMessage(imagehtml);
+      socket.emit('chat:message', MessageDirector.GetInstance.createMessage(imagemessage,authinfo.username,receiver));
     upload_image = {};
   }
   else {
@@ -266,11 +235,17 @@ socket.on('picture:upload', (res) => {
   if (res){
     //上传成功，发送消息
     console.log('upload success');
-
+  if (change_avater){
+      socket.emit('user:avatar',{user: authinfo.username, md5: avater_md5});
+      change_avater = false;
+      avater_md5 = null;
+      return
+  }
     //发送图片消息
     let imagemessage = '[img:' + upload_image.md5 + '.' + upload_image.suffix + ']';
     let imagehtml = MessageDirector.GetInstance.createHTMLFromPlain(imagemessage);
     appendMessage(imagehtml);
+    socket.emit('chat:message', MessageDirector.GetInstance.createMessage(imagemessage,authinfo.username,receiver));
     upload_image = {};
   }
   else {
@@ -278,11 +253,15 @@ socket.on('picture:upload', (res) => {
     console.log('upload fail');
     upload_image = {};
   }
-  if (change_avater){
-    socket.emit('user:avatar',{user: authinfo.username, md5: avater_md5});
-    change_avater = false;
-    avater_md5 = null;
-  }
+});
+
+socket.on('user:avatar', (res) => {
+    if (res){
+        socket.emit('user:get_avatar', {user: authinfo.username});
+    }
+    else {
+        alert('修改头像错误，请稍后再试');
+    }
 });
 
 $$('open_file').addEventListener('change', function () {
@@ -306,23 +285,6 @@ $$('open_file').addEventListener('change', function () {
     socket.emit('picture:query', {md5: upload_image.md5});
     upload_image.pic = evt.srcElement.result;
     //console.log(upload_image);
-
-    let img = document.createElement('img');
-    img.src = evt.srcElement.result;
-    img.style.maxHeight = '99%';
-    img.style.maxWidth = '99%';
-    /*
-    let message = new message(user, receiver, img.outerHTML);
-    let formated = message.get_formated_message();
-    messages.appendChild(formated);
-    */
-    /*
-    socket.emit('chat:message', {
-      sender: message.sender,
-      receiver: message.receiver,
-      formated: formated.outerHTML
-    });
-    */
   };
   reader.readAsDataURL(image);
   $$('open_file').value = "";
@@ -397,15 +359,16 @@ socket.on('chat:add', (res) => {        //处理返回结果
 );
 
 // Finally: main start
-/* init emoji */
-//socket.emit('emoji:list');
 /* auto login */
+/*
+TODO: 为了测试把自动登录关掉了
 authinfo = store.get('authinfo'); // 用户登陆信息 { username: str, password: str }
 user = authinfo ? authinfo.username : null; // 暂存用户名
 if(authinfo) {
   console.log('[Init] try auto login');
   socket.emit('user:login', authinfo);
 }
+*/
 /* ok, now show HTML body*/
 $$('body').style.visibility = 'visible';
 

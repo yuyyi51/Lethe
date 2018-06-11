@@ -81,6 +81,13 @@ io.on('connection', (socket) => {
       socket.emit('user:get_avatar', res);
     });
   });
+
+  socket.on('user:get_friends_avatar', (data) => {
+      console.log(data);
+      db.get_avatar(data.user, (res) => {
+          socket.emit('user:get_friends_avatar',data.user, res);
+      });
+  });
   // desc:  搜索用户
   // on:    { username: str }
   // emit:  { username: str: avatar: uri }
@@ -119,22 +126,43 @@ io.on('connection', (socket) => {
   // desc:  获取某个会话的历史记录
   // on:    { chat_id: str, limit: int }
   // emit:  [{ sender: @user, content: str }]
-  socket.on('chat:history', (data) => {
+  socket.on('chat:history', (data, fn) => {
+    let sender = data.sender;
+    let receiver = data.receiver;
+    let id1 = sender < receiver ? sender : receiver;
+    let id2 = sender < receiver ? receiver : sender;
+    db.get_chat_history(id1, id2, (res) =>{
+      console.log(res);
+      fn(res);
+    });
+  });
 
+  socket.on('user:get_userinfo',(data,fn) =>{
+    db.get_userinfo({username:data.username},(res)=>{
+      console.log(res);
+      if(res!=null)
+        fn(res);
+      else
+        alert('error findings!');
+    });
   });
 
   // desc:  在某个会话中新增消息
-  // on:    { chat_id: str, sender: str, receiver: str, content: str }
+  // on:    {
+    // sender: str,
+    // target: str,
+    // message: {
+    // 	  sender: str,
+    //    content: str,
+    //    timestamp: datetime }
+    // }
   // emit:  bool
   socket.on('chat:message', (data) => {
     db.append_chat_history(data);
-    let recv_sock = user_socket.get(data.receiver);
-    if (recv_sock !== undefined) {
-      recv_sock.emit('chat:message', {
-        sender: data.sender,
-        receiver: data.receiver,
-        content: data.content
-      });
+    let recv_sock = user_socket.get(data.target);
+    if (recv_sock !== undefined){
+      //目标在线
+      recv_sock.emit('chat:message', data);
     }
   });
 
@@ -176,12 +204,4 @@ io.on('connection', (socket) => {
     });
 
   });
-
-  // 查询预定义表情符号列表
-  // on: null
-  // emit: [uri]
-  socket.on('emoji:list', (data) => {
-
-  });
-
 });
