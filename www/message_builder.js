@@ -50,7 +50,7 @@ TextMessageBuilder.prototype.createHTML = function (message, selfname) {
     if (selfname === sender)
         html.className = 'right';
     html.innerHTML = '<div class="avatar">' +
-        '<img alt="' + sender + '" src=' + $$('avatar:'+sender).src + ' />' + '</div>' +
+        '<img alt="' + sender + '" src=' + $$(sender+'_avatar').src + ' />' + '</div>' +
         '<div class="msg">' + ' <div class="tri"></div>' +
         '<div class="msg_inner">' + content + '</div>' + ' </div>';
     return html;
@@ -91,7 +91,7 @@ ImageMessageBuilder.prototype.createHTML = function (message, selfname) {
     if (selfname === sender)
         html.className = 'right';
     html.innerHTML = '<div class="avatar">' +
-        '<img alt="user" src=' + $$('avatar:'+sender).src + ' />' + '</div>' +
+        '<img alt="user" src=' + $$(sender+'_avatar').src + ' />' + '</div>' +
         '<div class="msg">' + ' <div class="tri"></div>' +
         '<div class="msg_inner">' + '<img style="max-width: 600px" src=' + url_base + image_base + image_url + ' />' + '</div>' + ' </div>';
     return html;
