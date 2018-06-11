@@ -125,16 +125,13 @@ io.on('connection', (socket) => {
   // on:    { chat_id: str, limit: int }
   // emit:  [{ sender: @user, content: str }]
   socket.on('chat:history', (data, fn) => {
-    db.get_chat_history(data.sender, data.receiver, (res) =>{
+    let sender = data.sender;
+    let receiver = data.receiver;
+    let id1 = sender < receiver ? sender : receiver;
+    let id2 = sender < receiver ? receiver : sender;
+    db.get_chat_history(id1, id2, (res) =>{
       console.log(res);
-      if(res !== null){
-        fn(res);
-      }
-      else{
-        db.get_chat_history(data.receiver, data.sender, (res) =>{
-          fn(res);
-        });
-      }
+      fn(res);
     });
   });
 
