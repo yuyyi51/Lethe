@@ -1,11 +1,21 @@
 // Part 1: public util function & globals
 function $$(id) { return document.getElementById(id); }
-
 const socket = io.connect();
 socket.on('disconnect', () => { socket.open(); });
-let url_base = socket.io.uri; // 'http://localhost:3000'
+var url_base = socket.io.uri; // 'http://localhost:3000'
+var image_base = '/data/images/';
 let authinfo, user;
 let upload_image = {};
+let change_avater = false;
+let avater_md5 = null;
+
+function appendMessage(html) {
+    $$('messages').appendChild(html);
+}
+
+function isImage(content) {
+    return content.match(/\[img:.*\]/) !== null;
+}
 
 // Part 2: login status control
 function change_login_status(status) {
@@ -20,6 +30,7 @@ function change_login_status(status) {
     store.remove('authinfo');
     $$('entry').style.display = 'block';
     $$('container').style.visibility = 'hidden';
+    window.location.reload();
   }
 }
 
@@ -51,6 +62,7 @@ socket.on('user:login', (res) => {
   }
 
   change_login_status(true);
+    socket.emit('user:get_avatar',{user: authinfo.username});
   socket.emit('user:get_userinfo', authinfo, (userinfo) => {
     let user = userinfo;
     console.log(user);
@@ -60,8 +72,11 @@ socket.on('user:login', (res) => {
 
     let div_user_username = $$('user_username');
     div_user_username.textContent = user.username;
+
+    /*
     let img_user_avatar = $$('user_avatar');
-    img_user_avatar.src = 'data/avatar/' + user.username + '.png';
+    mg_user_avatar.src = 'data/avatar/' + user.username + '.png';
+    */
 
     let ul_friends = $$('friends');
     let onclick_friend = function () {
@@ -108,15 +123,46 @@ socket.on('user:login', (res) => {
     }
   });
 });
-$$('div_avatar').onclick = () => {  // as logout btn
+$$('log_out').onclick = () => {  // as logout btn
   if (confirm('are you sure to logout?')) {
     change_login_status(false);
   }
 };
+$$('user_avatar').onclick = () => {
+  $("#change_avatar").trigger("click");
+};
+$$('change_avatar').addEventListener('change', function () {
+    if (this.files.length === 0) return;
+    let image = this.files[0];
+    if(!image.type.startsWith('image')) {
+        alert('this is not a image file.');
+        return;
+    }
+    upload_image.suffix = image.name.toLowerCase().split('.').splice(-1)[0];
+    let reader = new FileReader();
+    if (!reader) {
+        console.log('error init FileReader.');
+        return;
+    }
+    change_avater = true;
+    reader.onload = (evt) => {
+        //console.log(evt.srcElement.result);
+        upload_image.md5 = SparkMD5.hash(evt.srcElement.result);
+        avater_md5 = upload_image.md5;
+        socket.emit('picture:query', {md5: upload_image.md5});
+        upload_image.pic = evt.srcElement.result;
+        //console.log(upload_image);
 
+        let img = document.createElement('img');
+        img.src = evt.srcElement.result;
+        img.style.maxHeight = '99%';
+        img.style.maxWidth = '99%';
+    };
+    reader.readAsDataURL(image);
+    $$('change_avatar').value = "";
+});
 // Part 3: chat control
 const chats = new Map();  // username => [messages]
-const emojis = $$('emojis');
 const input = $$('input');
 const messages = $$('messages');  // 当前窗口的消息
 let receiver;                     // 当前窗口的发送对象
@@ -124,20 +170,20 @@ let receiver;                     // 当前窗口的发送对象
 // FIXME: 需要改善
 function message2escape(content) {  // RAW to DB-format
   // replace [emoji:..] with <img...
-  let match;
+  //let match;
   let result = content;
-  let reg = /\[emoji:\d+\]/g;
+  /*let reg = /\[emoji:\d+\]/g;
   while (match = reg.exec(content)) {
     let emoji_index = match[0].slice(7, -1);
     let emoji_amount = emojis.children.length;
     if (emoji_index <= emoji_amount) {
       result = result.replace(match[0], '<img class="emoji" src="data/emoji/' + emoji_index + '.gif" />');
     }
-  }
+  }*/
   return result;
 }
 function message2html(content, sender) {  // DB-format to HTML
-  let message = document.createElement('p');
+  let message = document.createElement('article');
   message.className = 'right';
   message.innerHTML = '<div class="avatar">' +
       '<img alt="' + sender + '" src=' + $$('user_avatar').src + ' />' + '</div>' +
@@ -157,19 +203,39 @@ socket.on('chat:message', (msg) => {
   }
 });
 
+socket.on('user:get_avatar', (res) => {
+  console.log(res);
+  let path = 'data/avatar/user.png';
+  if (res !== null){
+    path = url_base + image_base + res ;
+  }
+
+  let img_user_avatar = $$('user_avatar');
+  img_user_avatar.src = path;
+  let temp = document.createElement('img');
+  temp.id = "avatar:" + authinfo.username;
+  temp.style.display = 'none';
+  img_user_avatar.appendChild(temp);
+  console.log($$("avatar:" + authinfo.username));
+});
+
 $$('send').onclick = () => {
   console.log('message to sent to ' + receiver + ' from ' + user);
-
-  let msg_escape = message2escape(input.value);
-  let msg_html = message2html(input.value);
+  let msg_html = MessageDirector.GetInstance.createHTMLFromPlain(input.value);
+  //let msg_escape = message2escape(input.value);
+  //let msg_html = message2html(input.value);
   messages.appendChild(msg_html);
+
+  //let builder_msg = new TextMessageBuilder().createHTMLFromPlain(input.value);
+  //messages.appendChild(builder_msg);
+
   input.value = '';
 
-  socket.emit('chat:message', {
+  /*socket.emit('chat:message', {
     sender: user,
     receiver: receiver,
     formated: msg_escape
-  });
+  });*/
 };
 
 // Part 3: picture-related control
@@ -177,9 +243,16 @@ socket.on('picture:query', (res) => {
   if (res){
     //图片已存在，发送消息
     console.log('image exists');
-
-    //TODO: 发送图片消息
-
+    if (change_avater){
+        socket.emit('user:avatar',{user: authinfo.username, md5: avater_md5});
+        change_avater = false;
+        avater_md5 = null;
+        return
+    }
+    //发送图片消息
+      let imagemessage = '[img:' + upload_image.md5 + '.' + upload_image.suffix + ']';
+      let imagehtml = MessageDirector.GetInstance.createHTMLFromPlain(imagemessage);
+      appendMessage(imagehtml);
     upload_image = {};
   }
   else {
@@ -194,14 +267,21 @@ socket.on('picture:upload', (res) => {
     //上传成功，发送消息
     console.log('upload success');
 
-    //TODO: 发送图片消息
-
+    //发送图片消息
+    let imagemessage = '[img:' + upload_image.md5 + '.' + upload_image.suffix + ']';
+    let imagehtml = MessageDirector.GetInstance.createHTMLFromPlain(imagemessage);
+    appendMessage(imagehtml);
     upload_image = {};
   }
   else {
     //上传出错
     console.log('upload fail');
     upload_image = {};
+  }
+  if (change_avater){
+    socket.emit('user:avatar',{user: authinfo.username, md5: avater_md5});
+    change_avater = false;
+    avater_md5 = null;
   }
 });
 
@@ -251,10 +331,7 @@ $$('select_image').onclick = () => {
   $("#open_file").trigger("click");
 };
 
-$$('select_emoji').addEventListener('click', (evt) => {
-  emojis.style.display = 'block';
-  evt.stopPropagation();
-}, false);
+
 socket.on('emoji:list', (data) => {
   for(let i = 1 ; i <= data.length; ++i) {
     let emoji_item = document.createElement('img');
@@ -266,6 +343,7 @@ socket.on('emoji:list', (data) => {
     emojis.appendChild(emoji_item);
   }
 });
+
 
 // part 4: friends controll
 //add friends
@@ -280,10 +358,9 @@ $$('friend_close').onclick = ()=>{
 }
 
 
-
 // Finally: main start
 /* init emoji */
-socket.emit('emoji:list');
+//socket.emit('emoji:list');
 /* auto login */
 authinfo = store.get('authinfo'); // 用户登陆信息 { username: str, password: str }
 user = authinfo ? authinfo.username : null; // 暂存用户名
@@ -293,3 +370,162 @@ if(authinfo) {
 }
 /* ok, now show HTML body*/
 $$('body').style.visibility = 'visible';
+
+/*by Gouyiqin*/
+function add_emoji(e) {
+    //$('#input').val( $('#input').val()+e.innerText);
+    //IE
+    if (document.selection) {
+        let sel = document.selection.createRange();
+        sel.text = e.innerText;
+    }
+    //Else
+    else if
+    (typeof $$('input').selectionStart === 'number' && typeof $$('input').selectionEnd === 'number') {
+        let startPos = $$('input').selectionStart,
+            endPos = $$('input').selectionEnd,
+            cursorPos = startPos,
+            str = $$('input').value;
+        $$('input').value = str.substring(0, startPos) + e.innerText + str.substring(endPos, str.length);
+        cursorPos += e.innerText.length;
+        $$('input').selectionStart = $$('input').selectionEnd = cursorPos
+    }
+    //无光标位置
+    else {
+        $$('input').value += str;
+    }
+}
+function insertText(obj,str) {
+
+}
+
+function get_emoji_list() {
+    let emoji=
+        "😀\n" +
+        "😁\n" +
+        "😂\n" +
+        "😃\n" +
+        "😄\n" +
+        "😅\n" +
+        "😆\n" +
+        "😇\n" +
+        "😈\n" +
+        "😉\n" +
+        "😊\n" +
+        "😋\n" +
+        "😌\n" +
+        "😍\n" +
+        "😎\n" +
+        "😏\n" +
+        "😐\n" +
+        "😑\n" +
+        "😒\n" +
+        "😓\n" +
+        "😔\n" +
+        "😕\n" +
+        "😖\n" +
+        "😗\n" +
+        "😘\n" +
+        "😙\n" +
+        "😚\n" +
+        "😛\n" +
+        "😜\n" +
+        "😝\n" +
+        "😞\n" +
+        "😟\n" +
+        "😠\n" +
+        "😡\n" +
+        "😢\n" +
+        "😣\n" +
+        "😤\n" +
+        "😥\n" +
+        "😦\n" +
+        "😧\n" +
+        "😨\n" +
+        "😩\n" +
+        "😪\n" +
+        "😫\n" +
+        "😬\n" +
+        "😭\n" +
+        "😮\n" +
+        "😯\n" +
+        "😰\n" +
+        "😱\n" +
+        "😲\n" +
+        "😳\n" +
+        "😴\n" +
+        "😵\n" +
+        "😶\n" +
+        "😷\n" +
+        "😸\n" +
+        "😹\n" +
+        "😺\n" +
+        "😻\n" +
+        "😼\n" +
+        "😽\n" +
+        "😾\n" +
+        "😿\n" +
+        "🙀\n" +
+        "🙅\n" +
+        "🙆\n" +
+        "🙇\n" +
+        "🙈\n" +
+        "🙉\n" +
+        "🙊\n" +
+        "🙋\n" +
+        "🙌\n" +
+        "🙍\n" +
+        "🙎\n" +
+        "🙏";
+    let emojilist=[];
+    //console.log(emoji.split("\n").length)
+    for(let i=0;i<emoji.split("\n").length;i=i+4)
+    {
+        emojilist+="<div>"+
+            "  <button type=\"button\" class=\"btn btn-default\" onclick=\"add_emoji(this)\">" +emoji.split("\n")[i]+
+            "</button>\n" +
+            "  <button type=\"button\" class=\"btn btn-default\" onclick=\"add_emoji(this)\">" +emoji.split("\n")[i+1]+
+            "</button>\n" +
+            "  <button type=\"button\" class=\"btn btn-default\" onclick=\"add_emoji(this)\">" +emoji.split("\n")[i+2]+
+            "</button>\n" +
+            "  <button type=\"button\" class=\"btn btn-default\" onclick=\"add_emoji(this)\">" +emoji.split("\n")[i+3]+
+            "</button>\n" +
+                "</div>";
+    }
+    return emojilist;
+}
+$(document).ready(function () {
+    $('#select_emoji').popover(
+        {
+            trigger:'click',
+            title:"Choose emoji",
+            html:true,
+            content:get_emoji_list(),
+            placement:'top',
+            container:'body'
+        }
+    )
+});
+
+// $$('select_emoji').addEventListener('click', (evt) => {
+//     //emojis.style.display = 'block';
+//     //evt.stopPropagation()
+//     //$('[data-toggle="popover"]').popover('toggle');
+//
+// }, false);
+
+//弹窗隐藏
+document.body.addEventListener('click', function (event)
+{
+
+    var target = $(event.target);
+    if (!target.hasClass('popover') //弹窗内部点击不关闭
+        && target.parent('.popover-content').length === 0
+        && target.parent('.popover-title').length === 0
+        && target.parent('.popover').length === 0
+        && target.data("toggle") !== "popover"
+        && target.attr("class") !== "btn btn-default")
+    {
+        $('#select_emoji').popover('hide');
+    }
+});

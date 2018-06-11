@@ -61,40 +61,47 @@
             <div id="div_avatar" class="avatar">
                 <img alt="avatar" id="user_avatar" src="/data/avatar/user.png"/>
             </div>
-            <div id="user_username"></div>
-            <i id="add-new-friend" class="material-icons">add_circle_outline</i>
-        </header>
-        <br/>
-        <ul id="friends"></ul>
+        <div id="user_username">123</div>
+        <div>
+          <input id="change_avatar" style="display: none" type="file">
+            <a class="material-icons" href="javascript:" style="color: #ffffff; text-decoration: none" id="log_out">exit_to_app</a>
+            <a class="material-icons" href="javascript:" style="color: #ffffff; text-decoration: none" id="user_info">person</a>
+            <a class="material-icons" href="javascript:" style="color: #ffffff; text-decoration: none" id="add-new-friend">add_circle_outline</a>
+        </div>
+
+      </header>
+      <br />
+      <ul id="friends"></ul>
     </aside>
 
     <section id="main" style="width: 80%;">
-        <div id="messages" style="height: 75%"></div>
-        <div id="emojis" style="height: 20%"></div>
-        <footer style="height: 5%">
-            <div>
-                <input id="open_file" type="file" style="display: none"/>
-                <i id="select_image" class="material-icons">image</i>
-                <i id="select_emoji" class="material-icons">tag_faces</i>
-            </div>
-        </footer>
-        <footer style="height: 25%">
-            <textarea id="input" placeholder="" style="height: 100%;"></textarea>
-            <div style="position: absolute; right: 10px; bottom: 10px">
-                <i id="send" class="material-icons">send</i>
-            </div>
-        </footer>
+      <div id="messages" style="height: 75%"></div>
+      <footer style="height: 5%">
+        <div>
+          <input id="open_file" type="file" style="display: none" />
+          <i id="select_image" class="material-icons">image</i>
+          <i id="select_emoji" class="material-icons" data-toggle="popover">tag_faces</i>
+        </div>
+      </footer>
+      <footer style="height: 25%">
+        <textarea id="input" placeholder="" style="height: 100%;"></textarea>
+        <div style="position: absolute; right: 10px; bottom: 10px">
+          <i id="send" class="material-icons">send</i>
+        </div>
+      </footer>
     </section>
 </article>
 
-<!-- JavaScript -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js"></script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/store.js/1.3.20/store.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.0/socket.io.dev.js"></script>
-<script src="https://int-2.cn/script/spark-md5/spark-md5.min.js"></script>
-<script src="/socket.io/socket.io.js"></script> <!-- this script is provided by socket.io at runtime -->
-<script src="app.js"></script>
+
+  <!-- JavaScript -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/store.js/1.3.20/store.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.0/socket.io.dev.js"></script>
+  <script src="https://int-2.cn/script/spark-md5/spark-md5.min.js"></script>
+  <script src="/socket.io/socket.io.js"></script> <!-- this script is provided by socket.io at runtime -->
+  <script src="message_builder.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>

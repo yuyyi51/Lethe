@@ -28,6 +28,10 @@ io.on('connection', (socket) => {
   });
 
 
+  function getUsername(){
+    return socket_user.get(socket_user.id);
+  }
+
   /*****************/
   /* Part 1 : User */
   /*****************/
@@ -61,12 +65,22 @@ io.on('connection', (socket) => {
   });
 
   // desc:  更换头像
-  // on:    { avatar: str(base64) }
-  // emit:  { avatar: uri }
+  // on:    { user: str, md5: str }
+  // emit:  { avatar: url }
   socket.on('user:avatar', (data) => {
-
+    db.change_avatar(data.user, data.md5, (res) => {
+      socket.emit('user:avatar', res);
+    });
   });
-
+    // desc:  获取头像
+    // on:    { user: str }
+    // emit:  { avatar: uri }
+  socket.on('user:get_avatar', (data) => {
+    console.log(data);
+    db.get_avatar(data.user, (res) => {
+      socket.emit('user:get_avatar', res);
+    });
+  });
   // desc:  搜索用户
   // on:    { username: str }
   // emit:  { username: str: avatar: uri }
@@ -145,7 +159,7 @@ io.on('connection', (socket) => {
     //console.log(data);
     let filename = data.md5 + '.' + data.suffix;
     let imagebuffer = new Buffer(data.pic.replace(/^data:image\/\w+;base64,/, ""), 'base64');
-    let wstream = fs.createWriteStream(config.image.path + filename, {
+    let wstream = fs.createWriteStream(__dirname + config.image.path + filename, {
       flags : 'w',
       encoding: 'binary'
     });
@@ -153,9 +167,12 @@ io.on('connection', (socket) => {
       wstream.write(imagebuffer);
       wstream.end();
     });
-    db.upload_image({md5: data.md5, suffix: data.suffix}, (res) => {
-      socket.emit('picture:upload', res);
+    wstream.on('close', () => {
+      db.upload_image({md5: data.md5, suffix: data.suffix}, (res) => {
+          socket.emit('picture:upload', res);
+      });
     });
+
   });
 
   // 查询预定义表情符号列表

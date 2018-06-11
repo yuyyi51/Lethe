@@ -124,3 +124,5 @@ fabric.properties
 
 /images/
 /doc/bootstrap.min.css
+/www/data/images/
+.DS_Store
