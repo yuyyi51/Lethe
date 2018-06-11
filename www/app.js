@@ -8,6 +8,7 @@ let authinfo, user;
 let upload_image = {};
 let change_avater = false;
 let avater_md5 = null;
+let check_friend_avater = false;
 
 function appendMessage(html) {
     $$('messages').appendChild(html);
@@ -62,67 +63,18 @@ socket.on('user:login', (res) => {
   }
 
   change_login_status(true);
-    socket.emit('user:get_avatar',{user: authinfo.username});
+  socket.emit('user:get_avatar',{user: authinfo.username});
   socket.emit('user:get_userinfo', authinfo, (userinfo) => {
     let user = userinfo;
     console.log(user);
-    console.log('12321');
-    // use authinfo info to build UI:
-    // 1. aside: self-profile & friends
-
     let div_user_username = $$('user_username');
     div_user_username.textContent = user.username;
-
-    /*
-    let img_user_avatar = $$('user_avatar');
-    mg_user_avatar.src = 'data/avatar/' + user.username + '.png';
-    */
-
-    let ul_friends = $$('friends');
-    let onclick_friend = function () {
-      console.log(this.id + ' tag clicked');
-      let main = $$('main');
-      main.style.visibility = 'visible';
-      receiver = this.id.replace('friend_', '');
-      console.log(user + ' chats with ' + receiver);
-
-      // 2. main: retrieve history
-      let sel = { sender: user, receiver: receiver };
-      socket.emit('get_history', sel, (history) => {
-        console.log(history);
-        while (messages.firstChild) {
-          messages.removeChild(messages.firstChild);
-        }
-
-        for (i = 0; i < history.length; ++i) {
-          let message = history[i]; // formated pure text
-
-          // find the sender, if not sender, place message in the left
-          let search_result = message.search('alt="' + user + '"');
-          // if not found, then it's not the message we sent
-          if (search_result === -1) {
-            message = message.replace('class="right"', " ");
-          }
-          messages.innerHTML += message;
-        }
-      });
-    };
-
     if(user.friends) for (let i = 0; i < user.friends.length; ++i) {
-      let li_friend = document.createElement('li');
-      let friend_account = user.friends[i].account;
-      li_friend.id = 'friend_' + friend_account;
-      li_friend.innerHTML = '<div class="avatar">' +
-          '<img alt="avatar" id=' + friend_account + '_avatar src= "avatar/' + friend_account + '.png"/>' +
-          '</div >' +
-          '<div class="main_li">' +
-          '<div class="username">' + friend_account + '</div>' +
-          '</div >';
-      li_friend.onclick = onclick_friend;
-      ul_friends.appendChild(li_friend);
+      socket.emit('user:get_friends_avatar',{user: user.friends[i]});
     }
   });
 });
+
 $$('log_out').onclick = () => {  // as logout btn
   if (confirm('are you sure to logout?')) {
     change_login_status(false);
@@ -203,13 +155,63 @@ socket.on('chat:message', (msg) => {
   }
 });
 
+socket.on('user:get_friends_avatar', (data,res) => {
+    console.log(res);
+    let path = 'data/avatar/user.png';
+    if (res !== null){
+        path = url_base + image_base + res ;
+    }
+    let onclick_friend = function () {
+        console.log(this.id + ' tag clicked');
+        let main = $$('main');
+        main.style.visibility = 'visible';
+        receiver = this.id.replace('friend_', '');
+        console.log(user + ' chats with ' + receiver);
+
+        // 2. main: retrieve history
+        let sel = { sender: user, receiver: receiver };
+        socket.emit('chat:history', sel, (history) => {
+            console.log(history);
+            if(history == null){
+                alert('未找到聊天记录！');
+                return;
+            }
+            while (messages.firstChild) {
+                messages.removeChild(messages.firstChild);
+            }
+            for (var i = 0; i < history.length; ++i) {
+                let message = history[i]; // formated pure text
+
+                // find the sender, if not sender, place message in the left
+                let search_result = message.search('alt="' + user + '"');
+                // if not found, then it's not the message we sent
+                if (search_result === -1) {
+                    message = message.replace('class="right"', " ");
+                }
+                messages.innerHTML += message;
+            }
+        });
+    };
+    let friend_name = data;
+    let ul_friends = $$('friends');
+    let li_friend = document.createElement('li');
+    li_friend.id = 'friend_' + friend_name;
+    li_friend.innerHTML = '<div class="avatar">' +
+        '<img alt="avatar" id=' + friend_name + '_avatar src= "/' + path + '"/>' +
+        '</div >' +
+        '<div class="main_li">' +
+        '<div class="username">' + friend_name + '</div>' +
+        '</div >';
+    li_friend.onclick = onclick_friend;
+    ul_friends.appendChild(li_friend);
+});
+
 socket.on('user:get_avatar', (res) => {
   console.log(res);
   let path = 'data/avatar/user.png';
   if (res !== null){
     path = url_base + image_base + res ;
   }
-
   let img_user_avatar = $$('user_avatar');
   img_user_avatar.src = path;
   let temp = document.createElement('img');
