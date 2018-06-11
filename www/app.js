@@ -341,7 +341,6 @@ $$('select_image').onclick = () => {
 };
 
 
-/*
 socket.on('emoji:list', (data) => {
   for(let i = 1 ; i <= data.length; ++i) {
     let emoji_item = document.createElement('img');
@@ -353,7 +352,21 @@ socket.on('emoji:list', (data) => {
     emojis.appendChild(emoji_item);
   }
 });
-*/
+
+
+// part 4: friends controll
+//add friends
+$$('add-new-friend').onclick = () =>{
+    $('#add-friend-body').show();
+    $('#friend-bg').show();
+}
+
+$$('friend_close').onclick = ()=>{
+    $('#add-friend-body').hide();
+    $('#friend-bg').hide();
+}
+
+
 // Finally: main start
 /* init emoji */
 //socket.emit('emoji:list');
