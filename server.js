@@ -101,10 +101,12 @@ io.on('connection', (socket) => {
   });
 
   // desc:  新增好友(新增会话)
-  // on:    { username: str }
-  // emit:  { username: str: avatar: uri, chat_id: str }
+  // on:    { requestUserName: str ,requestFriendName: str}
+  // emit:  result
   socket.on('chat:add', (data) => {
-
+      db.appand_friend(data.requestUserName,data.requestFriendName,(res)=>{
+          socket.emit('chat:add',res);          //返回客户端结果
+      })
   });
 
   // desc: 删除好友(删除会话)

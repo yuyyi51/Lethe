@@ -350,13 +350,51 @@ socket.on('emoji:list', (data) => {
 $$('add-new-friend').onclick = () =>{
     $('#add-friend-body').show();
     $('#friend-bg').show();
+    $('#add-friend-name').attr("autofocus","autofocus");
 }
 
 $$('friend_close').onclick = ()=>{
     $('#add-friend-body').hide();
     $('#friend-bg').hide();
+    $('#add-friend-name').val('');
+    $('#add-friend-msg').empty();
+    $('#add-friend-msg').hide();
 }
 
+$$('add-friend-btn').onclick =()=>{
+    // console.log($('#add-friend-name').val().length);
+    if ($('#add-friend-name').val().length===0){     //输入的添加好友的账号为空
+        $('#add-friend-msg').html('添加好友账号不能为空！');
+        $('#add-friend-msg').show();
+    }
+    else {
+        $('#add-friend-msg').empty();
+        var data={
+            requestUserName: user,
+            requestFriendName:$('#add-friend-name').val()
+        };
+        $('#add-friend-msg').hide();
+        socket.emit('chat:add',data);
+    }
+}
+
+socket.on('chat:add', (res) => {        //处理返回结果
+        console.log(res);
+        if (res === null) {
+            $('#add-friend-msg').html('该账号不存在！');
+        }
+        else if (res === 'exist') {
+            $('#add-friend-msg').html('已是好友！');
+        }
+        else if (res === 'success') {
+            $('#add-friend-msg').html('添加成功！');
+        }
+        else {
+            $('#add-friend-msg').html('其它错误！');
+        }
+        $('#add-friend-msg').show();
+    }
+);
 
 // Finally: main start
 /* init emoji */
