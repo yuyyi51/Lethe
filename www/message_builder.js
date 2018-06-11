@@ -44,13 +44,13 @@ TextMessageBuilder.prototype.createMessage = function (plain_message, sender, ta
 };
 
 TextMessageBuilder.prototype.createHTML = function (message, selfname) {
-    let content = message.message.content;
-    let sender = content.sender;
+    let content = message.content;
+    let sender = message.sender;
     let html = document.createElement('article');
     if (selfname === sender)
         html.className = 'right';
     html.innerHTML = '<div class="avatar">' +
-        '<img alt="' + sender + '" src=' + $$('avatar:'+sender).src + ' />' + '</div>' +
+        '<img alt="' + sender + '" src=' + $$(sender+'_avatar').src + ' />' + '</div>' +
         '<div class="msg">' + ' <div class="tri"></div>' +
         '<div class="msg_inner">' + content + '</div>' + ' </div>';
     return html;
@@ -91,7 +91,7 @@ ImageMessageBuilder.prototype.createHTML = function (message, selfname) {
     if (selfname === sender)
         html.className = 'right';
     html.innerHTML = '<div class="avatar">' +
-        '<img alt="user" src=' + $$('avatar:'+sender).src + ' />' + '</div>' +
+        '<img alt="user" src=' + $$(sender+'_avatar').src + ' />' + '</div>' +
         '<div class="msg">' + ' <div class="tri"></div>' +
         '<div class="msg_inner">' + '<img style="max-width: 600px" src=' + url_base + image_base + image_url + ' />' + '</div>' + ' </div>';
     return html;
@@ -113,23 +113,23 @@ var MessageDirector = function () {
     this.imageBuilder = new ImageMessageBuilder();
 };
 
-MessageDirector.prototype.createMessage = function (content) {
+MessageDirector.prototype.createMessage = function (content, sender, target) {
     if (content.match(/\[img:(\S*)\]/) !== null){
         //image
-        return this.imageBuilder.createMessage(content);
+        return this.imageBuilder.createMessage(content, sender, target);
     }
     else {
-        return this.textBuilder.createMessage(content);
+        return this.textBuilder.createMessage(content, sender, target);
     }
 };
 
 MessageDirector.prototype.createHTML = function (message, self) {
-    if (message.message.content.match(/\[img:(\S*)\]/) !== null) {
+    if (message.content.match(/\[img:(\S*)\]/) !== null) {
         //image
         return this.imageBuilder.createHTML(message, self);
     }
     else{
-        return this.textBuilder.createMessage(message, self);
+        return this.textBuilder.createHTML(message, self);
     }
 };
 

@@ -1,46 +1,72 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <!-- Meta Tags -->
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <!-- CSS -->
-  <link rel="stylesheet" type="text/css" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css" />
-  <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
-  <link rel="stylesheet" type="text/css" href="app.css" />
+    <!-- Meta Tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <!-- CSS -->
+    <link rel="stylesheet" type="text/css" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css"/>
+    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/icon?family=Material+Icons"/>
+    <link rel="stylesheet" type="text/css" href="app.css"/>
 
-  <title>Lethe</title>
+    <title>Lethe</title>
 </head>
 <body id="body" style="background-color: lightcyan; visibility: hidden;">
 
-  <!-- 未登录时显示注册/登陆表单 -->
-  <article id="entry" style="position:absolute; margin: auto; width: 300px;">
+<!-- 未登录时显示注册/登陆表单 -->
+<article id="entry" style="position:absolute; margin: auto; width: 300px;">
     <h1>Lethe</h1>
-    <hr />
+    <hr/>
     <div class="form-group">
-      <label>Username</label>
-      <input type="text" class="form-control" id="username">
+        <label>Username</label>
+        <input type="text" class="form-control" id="username">
     </div>
     <div class="form-group">
-      <label>Password</label>
-      <input type="password" class="form-control" id="password">
+        <label>Password</label>
+        <input type="password" class="form-control" id="password">
     </div>
     <button type="button" class="btn btn-primary" id="btn_register">注册</button>
     <button type="button" class="btn btn-primary" id="btn_login">登录</button>
-  </article>
+</article>
 
-  <!-- 登录后显示主界面 -->
-  <article id="container" style="width: 100%; height: 100%; visibility: hidden;">
-    <aside>
-      <header>
-        <div id="div_avatar" class="avatar">
-          <img alt="avatar" id="user_avatar" src="/data/avatar/user.png"/>
+<!-- 登录后显示主界面 -->
+
+
+<article id="container" style="width: 100%; height: 100%; visibility: hidden;">
+    <div id="add-friend-body">
+        <div class="modal-header">
+            <h5 class="modal-title" id="addFriendModalLabel" style="font-size: 18px;">添加好友</h5>
+            <button type="button" id="friend_close" class="close" data-dismiss="modal">
+                <span aria-hidden="true">×</span>
+                <span class="sr-only">Close</span>
+            </button>
         </div>
-        <div id="user_username">123</div>
+        <div class="modal-body">
+            <section class="v5-input-txt">
+                <form id="add-friend-form" action="" method="post" autocomplete="off">
+                    <li class="form-group">
+                        <input class="form-control" id="add-friend-name" maxlength="50"  placeholder="请输入您要添加的好友的账号" type="text">
+                    </li>
+                </form>
+                <div class="marginB10">
+                    <button id="add-friend-btn" type="button" class="btn btn-block">添加好友</button>
+                </div>
+            </section>
+        </div>
+
+    </div>
+    <div id="friend-bg"></div>
+    <aside>
+        <header>
+            <div id="div_avatar" class="avatar">
+                <img alt="avatar" id="user_avatar" src="/data/avatar/user.png"/>
+            </div>
+        <div id="user_username"></div>
         <div>
           <input id="change_avatar" style="display: none" type="file">
-          <a class="material-icons" href="javascript:" style="color: #ffffff; text-decoration: none" id="log_out">exit_to_app</a>
-          <a class="material-icons" href="javascript:" style="color: #ffffff; text-decoration: none" id="user_info">person</a>
+            <a class="material-icons" href="javascript:" style="color: #ffffff; text-decoration: none" id="log_out">exit_to_app</a>
+            <a class="material-icons" href="javascript:" style="color: #ffffff; text-decoration: none" id="user_info">person</a>
+            <a class="material-icons" href="javascript:" style="color: #ffffff; text-decoration: none" id="add-new-friend">add_circle_outline</a>
         </div>
 
       </header>
@@ -64,7 +90,8 @@
         </div>
       </footer>
     </section>
-  </article>
+</article>
+
 
   <!-- JavaScript -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.js"></script>

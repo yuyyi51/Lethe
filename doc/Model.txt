@@ -2,6 +2,7 @@ user = {
   _id: int,
   username: str,
   password: str,
+  friends: [@user]
   avatar: str,
 }
 
