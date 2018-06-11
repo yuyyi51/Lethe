@@ -1,4 +1,4 @@
-user = {
+﻿user = {
   _id: int,
   username: str,
   password: str,
