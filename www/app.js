@@ -134,7 +134,6 @@ socket.on('chat:message', (msg) => {
 });
 
 socket.on('user:get_friends_avatar', (data,res) => {
-    console.log(res);
     let path = 'data/avatar/user.png';
     if (res !== null){
         path = url_base + image_base + res ;
@@ -149,13 +148,11 @@ socket.on('user:get_friends_avatar', (data,res) => {
         // 2. main: retrieve history
         let sel = { sender: user, receiver: receiver };
         socket.emit('chat:history', sel, (history) => {
-            console.log(history);
-            if(history == null){
-                alert('未找到聊天记录！');
-                return;
-            }
             while (messages.firstChild) {
                 messages.removeChild(messages.firstChild);
+            }
+            if (history === null){
+                return;
             }
             for (var i = 0; i < history.messages.length; ++i) {
                 let tmpMessage = history.messages[i];
@@ -170,14 +167,31 @@ socket.on('user:get_friends_avatar', (data,res) => {
     li_friend.id = 'friend_' + friend_name;
     li_friend.style.height="60px";
     li_friend.style.padding="10px";
-    li_friend.innerHTML = '<div class="avatar">' +
-        '<img alt="avatar" id=' + friend_name + '_avatar src= "/' + path + '"/>' +
-        '</div >' +
-        '<div class="main_li">' +
-        '<div class="username">' + friend_name + '</div>' +
-        '</div >';
+    li_friend.innerHTML =
+        '<button type="button" '+' id="delete_friend_'+friend_name+'" data-dismiss="modal" '+'class="close" '+'name='+friend_name+' style="float: left; width: 10%" > '+
+        ' <span aria-hidden="true" style="color: white">×</span>' +
+        '<span class="sr-only">Close</span>'+
+        '</button>'+
+            '<div class="avatar" style="float: left; margin-left: 1em; width: 25%">' +
+                '<img alt="avatar" id=' + friend_name + '_avatar src= "/' + path + '"/>' +
+            '</div >' +
+            '<div class="main_li" style="width: 50%">' +
+                '<div class="username">' + friend_name + '</div>';
     li_friend.onclick = onclick_friend;
     ul_friends.appendChild(li_friend);
+    $('#delete_friend_'+friend_name).click(
+        ()=>{
+            let confirm_res=confirm('你确定要删除该好友吗？');
+            if (confirm_res){
+                let del_info={
+                    requestUserName: user,
+                    requestFriendName:friend_name
+                };
+                socket.emit('chat:del',del_info);
+            }
+        }
+    );
+
 });
 
 socket.on('user:get_avatar', (res) => {
@@ -337,11 +351,12 @@ $$('add-friend-btn').onclick =()=>{
         };
         $('#add-friend-msg').hide();
         socket.emit('chat:add',data);
+        // window.location.reload(true);
     }
 }
 
 socket.on('chat:add', (res) => {        //处理返回结果
-        console.log(res);
+        // console.log(res);
         if (res === null) {
             $('#add-friend-msg').html('该账号不存在！');
         }
@@ -358,17 +373,25 @@ socket.on('chat:add', (res) => {        //处理返回结果
     }
 );
 
+
+
+socket.on('chat:del',(res)=>{
+    if (res){
+        alert('删除成功');
+    }
+});
+
 // Finally: main start
 /* auto login */
-/*
-TODO: 为了测试把自动登录关掉了
+
+//TODO: 为了测试把自动登录关掉了
 authinfo = store.get('authinfo'); // 用户登陆信息 { username: str, password: str }
 user = authinfo ? authinfo.username : null; // 暂存用户名
 if(authinfo) {
   console.log('[Init] try auto login');
   socket.emit('user:login', authinfo);
 }
-*/
+
 /* ok, now show HTML body*/
 $$('body').style.visibility = 'visible';
 

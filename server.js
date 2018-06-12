@@ -76,14 +76,14 @@ io.on('connection', (socket) => {
     // on:    { user: str }
     // emit:  { avatar: uri }
   socket.on('user:get_avatar', (data) => {
-    console.log(data);
+    // console.log(data);
     db.get_avatar(data.user, (res) => {
       socket.emit('user:get_avatar', res);
     });
   });
 
   socket.on('user:get_friends_avatar', (data) => {
-      console.log(data);
+      // console.log(data);
       db.get_avatar(data.user, (res) => {
           socket.emit('user:get_friends_avatar',data.user, res);
       });
@@ -113,14 +113,18 @@ io.on('connection', (socket) => {
   socket.on('chat:add', (data) => {
       db.appand_friend(data.requestUserName,data.requestFriendName,(res)=>{
           socket.emit('chat:add',res);          //返回客户端结果
-      })
+      });
   });
 
   // desc: 删除好友(删除会话)
-  // on: { username: str }
+  // on: { requestUserName: str ,requestFriendName: str}
   // emit: bool
   socket.on('chat:del', (data) => {
-
+      db.delete_friend(data.requestUserName,data.requestFriendName,(res)=>{
+          if (res){
+              socket.emit('chat:del',true);
+          }
+      });
   });
 
   // desc:  获取某个会话的历史记录
@@ -132,14 +136,12 @@ io.on('connection', (socket) => {
     let id1 = sender < receiver ? sender : receiver;
     let id2 = sender < receiver ? receiver : sender;
     db.get_chat_history(id1, id2, (res) =>{
-      console.log(res);
       fn(res);
     });
   });
 
   socket.on('user:get_userinfo',(data,fn) =>{
     db.get_userinfo({username:data.username},(res)=>{
-      console.log(res);
       if(res!=null)
         fn(res);
       else
