@@ -85,6 +85,7 @@ socket.on('user:login', (res) => {
       socket.emit('user:get_friends_avatar',{user: user.friends[i]});
     }
   });
+    socket.emit('add_user_socket', {username: authinfo.username});
 });
 
 $$('log_out').onclick = () => {  // as logout btn
@@ -125,12 +126,12 @@ const input = $$('input');
 const messages = $$('messages');  // 当前窗口的消息
 //let receiver;                     // 当前窗口的发送对象
 let receiver = 'test2' ;      //测试用
+var messageBox = document.getElementById('messages');
 
 socket.on('chat:message', (msg) => {
-  // 1.存入chats中
-  // 2.如果是当前目标，同时加入messages中
-  //TODO: 判断发送者是否是当前聊天对象
-  appendMessage(MessageDirector.GetInstance.createHTML(msg, authinfo.username));
+    if(receiver === msg.sender)
+        appendMessage(MessageDirector.GetInstance.createHTML(msg.message, authinfo.username));
+    messageBox.scrollTop = messageBox.scrollHeight;
 });
 
 socket.on('user:get_friends_avatar', (data,res) => {
@@ -159,6 +160,7 @@ socket.on('user:get_friends_avatar', (data,res) => {
                 let msg_html = MessageDirector.GetInstance.createHTML(tmpMessage, user);
                 messages.appendChild(msg_html);
             }
+            messageBox.scrollTop = messageBox.scrollHeight;
         });
     };
     let friend_name = data;
@@ -212,6 +214,7 @@ $$('send').onclick = () => {
   //let msg_escape = message2escape(input.value);
   //let msg_html = message2html(input.value);
   messages.appendChild(msg_html);
+  messageBox.scrollTop = messageBox.scrollHeight;
 
   //let builder_msg = new TextMessageBuilder().createHTMLFromPlain(input.value);
   //messages.appendChild(builder_msg);
@@ -235,6 +238,7 @@ socket.on('picture:query', (res) => {
       let imagemessage = '[img:' + upload_image.md5 + '.' + upload_image.suffix + ']';
       let imagehtml = MessageDirector.GetInstance.createHTMLFromPlain(imagemessage);
       appendMessage(imagehtml);
+      messageBox.scrollTop = messageBox.scrollHeight;
       socket.emit('chat:message', MessageDirector.GetInstance.createMessage(imagemessage,authinfo.username,receiver));
     upload_image = {};
   }
@@ -259,6 +263,7 @@ socket.on('picture:upload', (res) => {
     let imagemessage = '[img:' + upload_image.md5 + '.' + upload_image.suffix + ']';
     let imagehtml = MessageDirector.GetInstance.createHTMLFromPlain(imagemessage);
     appendMessage(imagehtml);
+    messageBox.scrollTop = messageBox.scrollHeight;
     socket.emit('chat:message', MessageDirector.GetInstance.createMessage(imagemessage,authinfo.username,receiver));
     upload_image = {};
   }
@@ -356,20 +361,19 @@ $$('add-friend-btn').onclick =()=>{
 }
 
 socket.on('chat:add', (res) => {        //处理返回结果
-        // console.log(res);
+        window.location.reload(true);
         if (res === null) {
-            $('#add-friend-msg').html('该账号不存在！');
+            alert("该账号不存在！");
         }
         else if (res === 'exist') {
-            $('#add-friend-msg').html('已是好友！');
+            alert("已是好友！");
         }
         else if (res === 'success') {
-            $('#add-friend-msg').html('添加成功！');
+            alert("添加成功");
         }
         else {
-            $('#add-friend-msg').html('其它错误！');
+            alert("其它错误！");
         }
-        $('#add-friend-msg').show();
     }
 );
 
@@ -378,6 +382,7 @@ socket.on('chat:add', (res) => {        //处理返回结果
 socket.on('chat:del',(res)=>{
     if (res){
         alert('删除成功');
+        window.location.reload(true);
     }
 });
 
@@ -385,12 +390,12 @@ socket.on('chat:del',(res)=>{
 /* auto login */
 
 //TODO: 为了测试把自动登录关掉了
-authinfo = store.get('authinfo'); // 用户登陆信息 { username: str, password: str }
-user = authinfo ? authinfo.username : null; // 暂存用户名
-if(authinfo) {
-  console.log('[Init] try auto login');
-  socket.emit('user:login', authinfo);
-}
+// authinfo = store.get('authinfo'); // 用户登陆信息 { username: str, password: str }
+// user = authinfo ? authinfo.username : null; // 暂存用户名
+// if(authinfo) {
+//   console.log('[Init] try auto login');
+//   socket.emit('user:login', authinfo);
+// }
 
 /* ok, now show HTML body*/
 $$('body').style.visibility = 'visible';

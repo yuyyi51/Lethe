@@ -20,6 +20,14 @@ const socket_user = new Map(); // socket.id -> username
 const user_socket = new Map(); // username -> socket
 io.on('connection', (socket) => {
   console.log('visitor connected.');
+
+  socket.on('add_user_socket', (data) =>
+  {
+    socket_user.set(socket.id, data.username);
+    user_socket.set(data.username, socket);
+    console.log(data.username + " connected.");
+  });
+
   socket.on('disconnect', () => {
     let u = socket_user.get(socket.id);
     if(u !== undefined) console.log(u + ' disconnected.');
