@@ -168,6 +168,7 @@ io.on('connection', (socket) => {
     // }
   // emit:  bool
   socket.on('chat:message', (data) => {
+    data.timestamp = new Date();
     db.append_chat_history(data);
     let recv_sock = user_socket.get(data.target);
     if (recv_sock !== undefined){

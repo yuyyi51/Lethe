@@ -33,7 +33,7 @@ TextMessageBuilder.prototype.createMessage = function (plain_message, sender, ta
     let message = {
         sender: sender,
         content: plain_message,
-        timestamp: new Date()
+        timestamp: null
     };
     let data = {
         sender: sender,
@@ -74,7 +74,7 @@ ImageMessageBuilder.prototype.createMessage = function(plain_message, sender, ta
     let message = {
         sender: sender,
         content: plain_message,
-        timestamp: new Date()
+        timestamp: null
     };
     let data = {
         sender: sender,
