@@ -8,12 +8,15 @@ const SparkMD5 = require('spark-md5');
 const config = require('./lib/config');
 const mongodb = require('./lib/db');
 const db = new mongodb(config.db);
+const message_mediator = require('./lib/message_mediator');
 
 // http
 app.use('/', express.static(__dirname + '/www'));
 http.listen(config.http.port, () => {
   console.log('listening on *:' + config.http.port);
 });
+
+const mediator = new message_mediator();
 
 // socket.io
 const socket_user = new Map(); // socket.id -> username
@@ -23,21 +26,30 @@ io.on('connection', (socket) => {
 
   socket.on('add_user_socket', (data) =>
   {
+    //似乎和login处重复了？
+    //mediator.AddUser(data.username, socket);
+    /*
     socket_user.set(socket.id, data.username);
     user_socket.set(data.username, socket);
+    */
     console.log(data.username + " connected.");
   });
 
   socket.on('disconnect', () => {
+    let u = mediator.GetUserFromSocket(socket);
+    if(u !== undefined) console.log(u + ' disconnected.');
+    mediator.DeleteUser(socket);
+    /*
     let u = socket_user.get(socket.id);
     if(u !== undefined) console.log(u + ' disconnected.');
     user_socket.delete(u);
     socket_user.delete(socket.id);
+    */
   });
 
 
   function getUsername(){
-    return socket_user.get(socket_user.id);
+    return mediator.GetUserFromSocket(socket);
   }
 
   /*****************/
@@ -63,8 +75,11 @@ io.on('connection', (socket) => {
     data.password = SparkMD5.hash(config.salt + data.password + config.salt);
     db.login(data, (res) => {
       if (res === true) {
+        mediator.AddUser(data.username, socket);
+        /*
         socket_user.set(socket.id, data.username);
         user_socket.set(data.username, socket);
+        */
       }
       console.log(data.username + " login " +
           (res === true ? "succeed." : "failed."));
@@ -170,11 +185,14 @@ io.on('connection', (socket) => {
   socket.on('chat:message', (data) => {
     data.timestamp = new Date();
     db.append_chat_history(data);
+    mediator.SendMessageTo(data.target, data);
+    /*
     let recv_sock = user_socket.get(data.target);
     if (recv_sock !== undefined){
       //目标在线
       recv_sock.emit('chat:message', data);
     }
+    */
   });
 
 
