@@ -85,7 +85,6 @@ socket.on('user:login', (res) => {
       socket.emit('user:get_friends_avatar',{user: user.friends[i]});
     }
   });
-    socket.emit('add_user_socket', {username: authinfo.username});
 });
 
 $$('log_out').onclick = () => {  // as logout btn
@@ -122,6 +121,7 @@ $$('change_avatar').addEventListener('change', function () {
 });
 // Part 3: chat control
 const chats = new Map();  // username => [messages]
+const message_store = new MessageStore();
 const input = $$('input');
 const messages = $$('messages');  // 当前窗口的消息
 //let receiver;                     // 当前窗口的发送对象
@@ -129,6 +129,9 @@ let receiver = 'test2' ;      //测试用
 var messageBox = document.getElementById('messages');
 
 socket.on('chat:message', (msg) => {
+    if (message_store.Exist(msg.sender)) {
+        message_store.AppendMessage(msg.sender, msg.message);
+    }
     if(receiver === msg.sender)
         appendMessage(MessageDirector.GetInstance.createHTML(msg.message, authinfo.username));
     messageBox.scrollTop = messageBox.scrollHeight;
@@ -148,20 +151,38 @@ socket.on('user:get_friends_avatar', (data,res) => {
 
         // 2. main: retrieve history
         let sel = { sender: user, receiver: receiver };
-        socket.emit('chat:history', sel, (history) => {
+        if (message_store.Exist(receiver)) {
+            //已有聊天记录
             while (messages.firstChild) {
                 messages.removeChild(messages.firstChild);
             }
-            if (history === null){
-                return;
-            }
-            for (var i = 0; i < history.messages.length; ++i) {
-                let tmpMessage = history.messages[i];
+            let history = message_store.GetMessage(receiver);
+            for (let i = 0; i < history.length; ++i){
+                let tmpMessage = history[i];
                 let msg_html = MessageDirector.GetInstance.createHTML(tmpMessage, user);
                 messages.appendChild(msg_html);
             }
             messageBox.scrollTop = messageBox.scrollHeight;
-        });
+        }
+        else{
+            socket.emit('chat:history', sel, (history) => {
+                while (messages.firstChild) {
+                    messages.removeChild(messages.firstChild);
+                }
+                if (history === null){
+                    message_store.StoreHistory(receiver,[]);
+                    return;
+                }
+                for (var i = 0; i < history.messages.length; ++i) {
+                    let tmpMessage = history.messages[i];
+                    let msg_html = MessageDirector.GetInstance.createHTML(tmpMessage, user);
+                    messages.appendChild(msg_html);
+                }
+                messageBox.scrollTop = messageBox.scrollHeight;
+                message_store.StoreHistory(receiver,history.messages);
+            });
+        }
+
     };
     let friend_name = data;
     let ul_friends = $$('friends');
@@ -218,8 +239,9 @@ $$('send').onclick = () => {
 
   //let builder_msg = new TextMessageBuilder().createHTMLFromPlain(input.value);
   //messages.appendChild(builder_msg);
-
-  socket.emit('chat:message', MessageDirector.GetInstance.createMessage(input.value, authinfo.username, receiver));
+  let message =   MessageDirector.GetInstance.createMessage(input.value, authinfo.username, receiver);
+  socket.emit('chat:message', message);
+  message_store.AppendMessage(receiver,message.message);
   input.value = '';
 };
 
@@ -239,7 +261,9 @@ socket.on('picture:query', (res) => {
       let imagehtml = MessageDirector.GetInstance.createHTMLFromPlain(imagemessage);
       appendMessage(imagehtml);
       messageBox.scrollTop = messageBox.scrollHeight;
-      socket.emit('chat:message', MessageDirector.GetInstance.createMessage(imagemessage,authinfo.username,receiver));
+      let message = MessageDirector.GetInstance.createMessage(imagemessage,authinfo.username,receiver);
+      socket.emit('chat:message', message);
+      message_store.AppendMessage(receiver, message.message);
     upload_image = {};
   }
   else {
@@ -264,7 +288,9 @@ socket.on('picture:upload', (res) => {
     let imagehtml = MessageDirector.GetInstance.createHTMLFromPlain(imagemessage);
     appendMessage(imagehtml);
     messageBox.scrollTop = messageBox.scrollHeight;
-    socket.emit('chat:message', MessageDirector.GetInstance.createMessage(imagemessage,authinfo.username,receiver));
+    let message = MessageDirector.GetInstance.createMessage(imagemessage,authinfo.username,receiver);
+    socket.emit('chat:message', message);
+    message_store.AppendMessage(receiver, message.message);
     upload_image = {};
   }
   else {

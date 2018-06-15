@@ -24,16 +24,6 @@ const user_socket = new Map(); // username -> socket
 io.on('connection', (socket) => {
   console.log('visitor connected.');
 
-  socket.on('add_user_socket', (data) =>
-  {
-    //似乎和login处重复了？
-    //mediator.AddUser(data.username, socket);
-    /*
-    socket_user.set(socket.id, data.username);
-    user_socket.set(data.username, socket);
-    */
-    console.log(data.username + " connected.");
-  });
 
   socket.on('disconnect', () => {
     let u = mediator.GetUserFromSocket(socket);
