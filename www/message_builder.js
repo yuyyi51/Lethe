@@ -46,6 +46,7 @@ TextMessageBuilder.prototype.createMessage = function (plain_message, sender, ta
 TextMessageBuilder.prototype.createHTML = function (message, selfname) {
     let content = message.content;
     let sender = message.sender;
+    console.log(message);
     let html = document.createElement('article');
     if (selfname === sender)
         html.className = 'right';

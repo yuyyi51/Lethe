@@ -8,7 +8,7 @@ let authinfo, user;
 let upload_image = {};
 let change_avater = false;
 let avater_md5 = null;
-let check_friend_avater = false;
+let is_group_chat = false;
 
 function appendMessage(html) {
     $$('messages').appendChild(html);
@@ -84,6 +84,9 @@ socket.on('user:login', (res) => {
     if(user.friends) for (let i = 0; i < user.friends.length; ++i) {
       socket.emit('user:get_friends_avatar',{user: user.friends[i]});
     }
+    if(user.ingroup) for (let i = 0; i < user.ingroup.length; ++i){
+        socket.emit('user:get_groups',{groupid: user.ingroup[i]});
+    }
   });
 });
 
@@ -137,12 +140,66 @@ socket.on('chat:message', (msg) => {
     messageBox.scrollTop = messageBox.scrollHeight;
 });
 
+socket.on('groupchat:message', (msg) => {
+    if (message_store.Exist(msg.target)) {
+        message_store.AppendMessage(msg.target, msg.message);
+    }
+    if(receiver === msg.target && msg.sender !== authinfo.username)
+        appendMessage(MessageDirector.GetInstance.createHTML(msg.message, authinfo.username));
+    messageBox.scrollTop = messageBox.scrollHeight;
+});
+
+socket.on('user:get_groups', (res)=>{
+    let groupinfo = res;
+    let path = 'data/avatar/group.png';
+    let onclick_group = function () {
+        is_group_chat = true;
+        console.log(this.id + ' tag clicked');
+        let main = $$('main');
+        main.style.visibility = 'visible';
+        receiver = Number(this.id.replace('group_', ''));
+        console.log(user + ' chats with group' + receiver);
+        // 2. main: retrieve history
+        while (messages.firstChild) {
+            messages.removeChild(messages.firstChild);
+        }
+        let history = message_store.GetMessage(receiver);
+        console.log(history);
+        for (let i = 0; i < history.length; ++i){
+            let tmpMessage = history[i];
+            let msg_html = MessageDirector.GetInstance.createHTML(tmpMessage, user);
+            messages.appendChild(msg_html);
+        }
+        messageBox.scrollTop = messageBox.scrollHeight;
+    };
+    let ul_groups = $$('friends');
+    let li_groups = document.createElement('li');
+    li_groups.id = 'group_' + groupinfo.groupid;
+    li_groups.style.height="60px";
+    li_groups.style.padding="10px";
+    li_groups.innerHTML =
+        '<button type="button" '+' id="delete_group_'+groupinfo.groupid+'" data-dismiss="modal" '+'class="close" '+'name='+ 'group_' +groupinfo.groupid +' style="float: left; width: 10%" > '+
+        ' <span aria-hidden="true" style="color: white">×</span>' +
+        '<span class="sr-only">Close</span>'+
+        '</button>'+
+        '<div class="avatar" style="float: left; margin-left: 1em; width: 25%">' +
+        '<img alt="avatar" id=' + 'group_' + groupinfo.groupid + '_avatar src= "/' + path + '"/>' +
+        '</div >' +
+        '<div class="main_li" style="width: 50%">' +
+        '<div class="username">' + '群组_' + groupinfo.groupid + '</div>';
+    li_groups.onclick = onclick_group;
+    message_store.StoreHistory(groupinfo.groupid, groupinfo.messages);
+    message_store.StoreHistory('group_members_' + groupinfo.groupid, groupinfo.members);
+    ul_groups.appendChild(li_groups);
+});
+
 socket.on('user:get_friends_avatar', (data,res) => {
     let path = 'data/avatar/user.png';
     if (res !== null){
         path = url_base + image_base + res ;
     }
     let onclick_friend = function () {
+        is_group_chat = false;
         console.log(this.id + ' tag clicked');
         let main = $$('main');
         main.style.visibility = 'visible';
@@ -182,7 +239,6 @@ socket.on('user:get_friends_avatar', (data,res) => {
                 message_store.StoreHistory(receiver,history.messages);
             });
         }
-
     };
     let friend_name = data;
     let ul_friends = $$('friends');
@@ -239,8 +295,11 @@ $$('send').onclick = () => {
 
   //let builder_msg = new TextMessageBuilder().createHTMLFromPlain(input.value);
   //messages.appendChild(builder_msg);
-  let message =   MessageDirector.GetInstance.createMessage(input.value, authinfo.username, receiver);
-  socket.emit('chat:message', message);
+  let message = MessageDirector.GetInstance.createMessage(input.value, authinfo.username, receiver);
+  if(is_group_chat === false)
+      socket.emit('chat:message', message);
+  else
+      socket.emit('groupchat:message', message, message_store.GetMessage('group_members_' + receiver));
   message_store.AppendMessage(receiver,message.message);
   input.value = '';
 };

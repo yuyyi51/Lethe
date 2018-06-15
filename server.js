@@ -101,6 +101,14 @@ io.on('connection', (socket) => {
           socket.emit('user:get_friends_avatar',data.user, res);
       });
   });
+
+  socket.on('user:get_groups', (data) => {
+      db.get_group_info(data.groupid, (res) => {
+          if(res == null)
+            return;
+          socket.emit('user:get_groups', res);
+      });
+  });
   // desc:  搜索用户
   // on:    { username: str }
   // emit:  { username: str: avatar: uri }
@@ -153,6 +161,12 @@ io.on('connection', (socket) => {
     });
   });
 
+  socket.on('groupchat:history', (data, fn) => {
+      db.get_group_chat_history(data, (res) =>{
+          fn(res);
+      });
+  });
+
   socket.on('user:get_userinfo',(data,fn) =>{
     db.get_userinfo({username:data.username},(res)=>{
       if(res!=null)
@@ -176,13 +190,12 @@ io.on('connection', (socket) => {
     data.timestamp = new Date();
     db.append_chat_history(data);
     mediator.SendMessageTo(data.target, data);
-    /*
-    let recv_sock = user_socket.get(data.target);
-    if (recv_sock !== undefined){
-      //目标在线
-      recv_sock.emit('chat:message', data);
-    }
-    */
+  });
+
+  socket.on('groupchat:message', (message, members)=>{
+      message.timestamp = new Date();
+      db.append_group_chat_history(message);
+      mediator.SendMessageToGroup(members, message);
   });
 
 
