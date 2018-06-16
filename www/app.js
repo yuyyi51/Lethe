@@ -462,7 +462,6 @@ $$('add-friend-btn').onclick =()=>{
 }
 
 socket.on('chat:add', (res) => {        //处理返回结果
-        window.location.reload(true);
         if (res === null) {
             alert("该账号不存在！");
         }
@@ -470,6 +469,7 @@ socket.on('chat:add', (res) => {        //处理返回结果
             alert("已是好友！");
         }
         else if (res === 'success') {
+            window.location.reload(true);
             alert("添加成功");
         }
         else {
@@ -478,12 +478,45 @@ socket.on('chat:add', (res) => {        //处理返回结果
     }
 );
 
-
-
 socket.on('chat:del',(res)=>{
     if (res){
         alert('删除成功');
         window.location.reload(true);
+    }
+});
+
+//group controll
+$$('add-group-btn').onclick=()=>{
+    if ($('#add-group-name').val().length===0){             //群聊账号不能为空
+        $('#add-group-msg').html('添加的群聊账号不能为空！');
+        $('#add-group-msg').show();
+    }
+    else {
+        $('#add-group-msg').empty();
+        var data={
+            requestUserName: user,
+            requestGroupId: Number($('#add-group-name').val())
+        };
+        if (isNaN(data.requestGroupId)){
+            $('#add-group-msg').html('输入的账号应为数字！');
+            $('#add-group-msg').show();
+            return;
+        }
+        $('#add-group-msg').hide();
+        socket.emit('group:add',data);
+    }
+}
+
+socket.on('group:add', (res) => {
+    if (res===null){
+        alert('该群聊不存在！');
+    }
+    else if (res==='success'){
+        window.location.reload(true);
+        alert("添加成功");
+    }
+    else {
+        alert("其它错误！");
     }
 });
 

@@ -128,25 +128,34 @@ io.on('connection', (socket) => {
 
   });
 
-  // desc:  新增好友(新增会话)
-  // on:    { requestUserName: str ,requestFriendName: str}
-  // emit:  result
-  socket.on('chat:add', (data) => {
-      db.appand_friend(data.requestUserName,data.requestFriendName,(res)=>{
-          socket.emit('chat:add',res);          //返回客户端结果
-      });
-  });
+    // desc:  新增好友(新增会话)
+    // on:    { requestUserName: str ,requestFriendName: str}
+    // emit:  result
+    socket.on('chat:add', (data) => {
+        db.appand_friend(data.requestUserName, data.requestFriendName, (res) => {
+            socket.emit('chat:add', res);          //返回客户端结果
+        });
+    });
 
-  // desc: 删除好友(删除会话)
-  // on: { requestUserName: str ,requestFriendName: str}
-  // emit: bool
-  socket.on('chat:del', (data) => {
-      db.delete_friend(data.requestUserName,data.requestFriendName,(res)=>{
-          if (res){
-              socket.emit('chat:del',true);
-          }
-      });
-  });
+    // desc: 删除好友(删除会话)
+    // on: { requestUserName: str ,requestFriendName: str}
+    // emit: bool
+    socket.on('chat:del', (data) => {
+        db.delete_friend(data.requestUserName, data.requestFriendName, (res) => {
+            if (res) {
+                socket.emit('chat:del', true);
+            }
+        });
+    });
+
+    //desc: 加入群聊
+    //on：{requestUserName: str ,requestGroupId: int}
+    // emit:  result
+    socket.on('group:add', (data) => {
+        db.join_group(data.requestUserName, data.requestGroupId, (res) => {
+            socket.emit('group:add', res);
+        });
+    });
 
   // desc:  获取某个会话的历史记录
   // on:    { chat_id: str, limit: int }
