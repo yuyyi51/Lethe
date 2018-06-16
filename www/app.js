@@ -188,6 +188,18 @@ socket.on('user:get_groups', (res)=>{
         '<div class="main_li" style="width: 50%">' +
         '<div class="username">' + '群组_' + groupinfo.groupid + '</div>';
     li_groups.onclick = onclick_group;
+    $('#delete_group_'+groupinfo.groupid).click(
+        ()=>{
+            let confirm_res=confirm('你确定要退出吗？');
+            if (confirm_res){
+                // let del_info={
+                //     requestUserName: user,
+                //     requestFriendName:friend_name
+                // };
+                // socket.emit('chat:del',del_info);
+            }
+        }
+    );
     message_store.StoreHistory(groupinfo.groupid, groupinfo.messages);
     message_store.StoreHistory('group_members_' + groupinfo.groupid, groupinfo.members);
     ul_groups.appendChild(li_groups);
@@ -300,7 +312,7 @@ $$('send').onclick = () => {
       socket.emit('chat:message', message);
   else
       socket.emit('groupchat:message', message, message_store.GetMessage('group_members_' + receiver));
-  message_store.AppendMessage(receiver,message.message);
+  // message_store.AppendMessage(receiver,message.message);
   input.value = '';
 };
 
@@ -486,6 +498,20 @@ socket.on('chat:del',(res)=>{
 });
 
 //group controll
+
+//创建群聊
+$$('create-group-btn').onclick=()=>{
+    socket.emit('group:create',user);
+}
+
+socket.on('group:crate',(res)=>{
+    if (res){
+        window.location.reload(true);
+        alert('创建群聊成功！');
+    }
+});
+
+//加入群聊
 $$('add-group-btn').onclick=()=>{
     if ($('#add-group-name').val().length===0){             //群聊账号不能为空
         $('#add-group-msg').html('添加的群聊账号不能为空！');

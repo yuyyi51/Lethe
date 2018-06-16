@@ -148,9 +148,18 @@ io.on('connection', (socket) => {
         });
     });
 
+    //desc: 创建群聊
+    //on: requestUsername: str
+    //emit: bool
+    socket.on('group:create',(requestUsername)=>{
+        db.create_group(requestUsername, (res)=>{
+            socket.emit('group:crate',res);
+        });
+    });
+
     //desc: 加入群聊
     //on：{requestUserName: str ,requestGroupId: int}
-    // emit:  result
+    //emit:  result
     socket.on('group:add', (data) => {
         db.join_group(data.requestUserName, data.requestGroupId, (res) => {
             socket.emit('group:add', res);
