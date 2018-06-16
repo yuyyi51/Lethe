@@ -33,16 +33,26 @@
 
 
 <article id="container" style="width: 100%; height: 100%; visibility: hidden;">
-    <div id="add-friend-body">
-        <div class="modal-header">
-            <h5 class="modal-title" id="addFriendModalLabel" style="font-size: 18px;">添加好友</h5>
-            <button type="button" id="friend_close" class="close" data-dismiss="modal">
-                <span aria-hidden="true">×</span>
+    <div id="add-body">
+
+        <div class="modal-header" style="background-color: #343E48; height: fit-content">
+            <!--<h5 class="modal-title" id="addFriendModalLabel" style="font-size: 18px;">添加好友</h5>-->
+            <!--好友-->
+            <button type="button" id="add-friend" class="btn">
+                <a class="material-icons" href="javascript:" style="color: #ffffff; text-decoration: none;position: center" >person_add</a>
+            </button>
+            <!--群聊-->
+            <button type="button" id="add-group" class="btn">
+                <a class="material-icons" href="javascript:" style="color: #ffffff; text-decoration: none;position: center" >group_add</a>
+            </button>
+            <button type="button" id="add-close" class="close" data-dismiss="modal">
+                <span aria-hidden="true" style="color: white">×</span>
                 <span class="sr-only">Close</span>
             </button>
         </div>
         <div class="modal-body">
-            <section class="v5-input-txt">
+            <!--添加好友-->
+            <section class="v5-input-txt" id="add-friend-body">
                 <form id="add-friend-form"  autocomplete="off">
                     <li class="form-group">
                         <input class="form-control" id="add-friend-name" maxlength="50"  placeholder="请输入您要添加的好友的账号" type="text">
@@ -53,10 +63,25 @@
                 </div>
                 <div class="msg" id="add-friend-msg" style="display: none;">cuo</div>
             </section>
+            <!--加入群聊或者创建群聊-->
+            <section class="v5-input-txt" style="display: none" id="add-group-body">
+                <div class="marginB10">
+                    <button id="create-group-btn" type="button" class="btn btn-block btn-primary">创建群聊</button>
+                </div>
+                <form id="add-group-form"  autocomplete="off">
+                    <li class="form-group">
+                        <input class="form-control" id="add-group-name" maxlength="50"  placeholder="请输入您要加入的群聊的账号" type="text">
+                    </li>
+                </form>
+                <div class="marginB10">
+                    <button id="add-group-btn" type="button" class="btn btn-block btn-primary">加入群聊好友</button>
+                </div>
+                <div class="msg" id="add-group-msg" style="display: none;">cuo</div>
+            </section>
         </div>
 
     </div>
-    <div id="friend-bg"></div>
+    <div id="add-bg"></div>
     <aside>
         <header>
             <div id="div_avatar" class="avatar">
@@ -67,7 +92,7 @@
           <input id="change_avatar" style="display: none" type="file">
             <a class="material-icons" href="javascript:" style="color: #ffffff; text-decoration: none" id="log_out">exit_to_app</a>
             <a class="material-icons" href="javascript:" style="color: #ffffff; text-decoration: none" id="user_info">person</a>
-            <a class="material-icons" href="javascript:" style="color: #ffffff; text-decoration: none" id="add-new-friend">add_circle_outline</a>
+            <a class="material-icons" href="javascript:" style="color: #ffffff; text-decoration: none" id="add-btn">add_circle_outline</a>
         </div>
 
       </header>

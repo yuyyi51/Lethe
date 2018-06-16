@@ -15,7 +15,7 @@ body {
 }
 
 
-#add-friend-body {
+#add-body {
     width: 25%;
     border: #ebebeb solid 1px;
     position: fixed;
@@ -29,7 +29,7 @@ body {
 
 }
 
-#friend-bg {
+#add-bg {
     width: 100%;
     height: 100%;
     position: fixed;
@@ -41,6 +41,21 @@ body {
     -khtml-opacity: 0.3;
     opacity: 0.3;
     display: none;
+}
+
+#add-friend{
+    width: 50%;
+    border-right-color: white;
+    height: 100%;
+    background-color: inherit;
+    color: white
+}
+
+#add-group{
+    width: 50%;
+    height: 100%;
+    background-color: inherit;
+    color: white
 }
 
 .v5-input-txt {
