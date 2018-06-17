@@ -71,6 +71,21 @@ body {
     color: white
 }
 
+#conf-name{
+    width: 50%;
+    border-right-color: white;
+    height: 100%;
+    background-color: inherit;
+    color: white
+}
+
+#conf-user{
+    width: 50%;
+    height: 100%;
+    background-color: inherit;
+    color: white
+}
+
 .v5-input-txt {
     padding: 0 15px 10px
 }

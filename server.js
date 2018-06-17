@@ -248,9 +248,23 @@ io.on('connection', (socket) => {
     // on:    { chat_id: str, name: str }
 
   socket.on('groupchat:rename', (data) => {
-      console.log("Rename: " + data);
+      console.log("Rename: " + data.name + " " + data.chat_id);
       db.rename_group(data.chat_id, data.name)
   });
+
+    // desc:  群主踢人
+    // on:    { chat_id: str, name: str }
+  socket.on('groupchat:kick', (data) => {
+      console.log("Kick: " + data.name + " " + data.chat_id);
+      db.kick_group(data.chat_id, data.name)
+  });
+
+    // desc:  添加群成员
+    // on:    { chat_id: str, name: str }
+    socket.on('groupchat:add', (data) => {
+        console.log("Add: " + data.name + " " + data.chat_id);
+        db.add_group(data.chat_id, data.name)
+    });
 
   /**********************/
   /* Part 3 : Resources */
