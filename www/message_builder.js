@@ -48,7 +48,7 @@ TextMessageBuilder.prototype.createHTML = function (message, avatarsrc, selfname
     let sender = message.sender;
     if(avatarsrc === 'default')
     {
-        avatarsrc = 'data/avatar/group.png';
+        avatarsrc = 'data/avatar/user.png';
     }
     else{
         avatarsrc = url_base + image_base + avatarsrc;
@@ -97,7 +97,7 @@ ImageMessageBuilder.prototype.createHTML = function (message, avatarsrc, selfnam
     let sender = message.sender;
     if(avatarsrc === 'default')
     {
-        avatarsrc = 'data/avatar/group.png';
+        avatarsrc = 'data/avatar/user.png';
     }
     else{
         avatarsrc = url_base + image_base + avatarsrc;

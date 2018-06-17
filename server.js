@@ -108,11 +108,12 @@ io.on('connection', (socket) => {
       });
   });
 
-  socket.on('user:get_groups', (data) => {
+  socket.on('user:get_groups', (data, fn) => {
       db.get_group_info(data.groupid, (res) => {
-          if(res == null)
-            return;
-          socket.emit('user:get_groups', res);
+          // if(res == null)
+          //   return;
+          // socket.emit('user:get_groups', res);
+          fn(res);
       });
   });
   // desc:  搜索用户

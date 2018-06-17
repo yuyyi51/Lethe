@@ -12,11 +12,6 @@ MessageStore.prototype.AppendMessage = function(name , message){
         this.StoreHistory(name, []);
     this.chats.get(name).push(message);
 };
-MessageStore.prototype.AppendMember = function(name , member){
-    if (this.Exist(name) === undefined)
-        this.StoreHistory(name, []);
-    this.chats.get(name).push(member);
-};
 MessageStore.prototype.GetMessage = function(name) {
     return this.chats.get(name);
 };

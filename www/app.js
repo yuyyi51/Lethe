@@ -138,16 +138,16 @@ socket.on('chat:message', (msg) => {
         message_store.AppendMessage(msg.sender, msg.message);
     }
     if(receiver === msg.sender)
-        appendMessage(MessageDirector.GetInstance.createHTML(msg.message, avatar_store.get(authinfo.username), authinfo.username));
+        appendMessage(MessageDirector.GetInstance.createHTML(msg.message, avatar_store.get(msg.sender), authinfo.username));
     messageBox.scrollTop = messageBox.scrollHeight;
 });
 
 socket.on('groupchat:message', (msg) => {
-    if (message_store.Exist(msg.target)) {
+    if(msg.sender !== authinfo.username){
         message_store.AppendMessage(msg.target, msg.message);
+        if(receiver === msg.target)
+            appendMessage(MessageDirector.GetInstance.createHTML(msg.message, avatar_store.get(msg.sender), authinfo.username));
     }
-    if(receiver === msg.target && msg.sender !== authinfo.username)
-        appendMessage(MessageDirector.GetInstance.createHTML(msg.message, avatar_store.get(authinfo.username), authinfo.username));
     messageBox.scrollTop = messageBox.scrollHeight;
 });
 
@@ -169,7 +169,7 @@ socket.on('user:get_groups', (res)=>{
         //console.log(history);
         for (let i = 0; i < history.length; ++i){
             let tmpMessage = history[i];
-            let msg_html = MessageDirector.GetInstance.createHTML(tmpMessage, avatar_store.get(user), user);
+            let msg_html = MessageDirector.GetInstance.createHTML(tmpMessage, avatar_store.get(tmpMessage.sender), user);
             messages.appendChild(msg_html);
         }
         messageBox.scrollTop = messageBox.scrollHeight;
@@ -207,11 +207,65 @@ socket.on('user:get_groups', (res)=>{
     );
 });
 
-socket.on('user:get_friends', (data,res) => {
-    let path = 'data/avatar/user.png';
-    if (res !== null){
-        path = url_base + image_base + res ;
-    }
+function addGroupsList(groupid) {
+    socket.emit('user:get_groups',{groupid: groupid}, (res)=>{
+        let groupinfo = res;
+        let path = 'data/avatar/group.png';
+        let onclick_group = function () {
+            is_group_chat = true;
+            console.log(this.id + ' tag clicked');
+            let main = $$('main');
+            main.style.visibility = 'visible';
+            receiver = Number(this.id.replace('group_', ''));
+            console.log(user + ' chats with group' + receiver);
+            // 2. main: retrieve history
+            while (messages.firstChild) {
+                messages.removeChild(messages.firstChild);
+            }
+            let history = message_store.GetMessage(receiver);
+            //console.log(history);
+            for (let i = 0; i < history.length; ++i){
+                let tmpMessage = history[i];
+                let msg_html = MessageDirector.GetInstance.createHTML(tmpMessage, avatar_store.get(tmpMessage.sender), user);
+                messages.appendChild(msg_html);
+            }
+            messageBox.scrollTop = messageBox.scrollHeight;
+        };
+        let ul_groups = $$('friends');
+        let li_groups = document.createElement('li');
+        li_groups.id = 'group_' + groupinfo.groupid;
+        li_groups.style.height="60px";
+        li_groups.style.padding="10px";
+        li_groups.innerHTML =
+            '<button type="button" '+' id="delete_group_'+groupinfo.groupid+'" data-dismiss="modal" '+'class="close" '+'name='+ 'group_' +groupinfo.groupid +' style="float: left; width: 10%" > '+
+            ' <span aria-hidden="true" style="color: white">×</span>' +
+            '<span class="sr-only">Close</span>'+
+            '</button>'+
+            '<div class="avatar" style="float: left; margin-left: 1em; width: 25%">' +
+            '<img alt="avatar" id=' + 'group_' + groupinfo.groupid + '_avatar src= "/' + path + '"/>' +
+            '</div >' +
+            '<div class="main_li" style="width: 50%">' +
+            '<div class="username">' + '群组_' + groupinfo.groupid + '</div>';
+        li_groups.onclick = onclick_group;
+        message_store.StoreHistory(groupinfo.groupid, groupinfo.messages);
+        message_store.StoreHistory('group_members_' + groupinfo.groupid, groupinfo.members);
+        ul_groups.appendChild(li_groups);
+        $('#delete_group_'+groupinfo.groupid).click(
+            ()=>{
+                let confirm_res=confirm('你确定要退出该群聊吗？');
+                if (confirm_res){
+                    let del_info={
+                        requestUserName: user,
+                        requestGroupId:groupinfo.groupid
+                    };
+                    socket.emit('group:del',del_info);
+                }
+            }
+        );
+    });
+}
+
+function addFriendsList(name) {
     let onclick_friend = function () {
         is_group_chat = false;
         console.log(this.id + ' tag clicked');
@@ -230,7 +284,7 @@ socket.on('user:get_friends', (data,res) => {
             let history = message_store.GetMessage(receiver);
             for (let i = 0; i < history.length; ++i){
                 let tmpMessage = history[i];
-                let msg_html = MessageDirector.GetInstance.createHTML(tmpMessage, avatar_store.get(user), user);
+                let msg_html = MessageDirector.GetInstance.createHTML(tmpMessage, avatar_store.get(tmpMessage.sender), user);
                 messages.appendChild(msg_html);
             }
             messageBox.scrollTop = messageBox.scrollHeight;
@@ -246,7 +300,7 @@ socket.on('user:get_friends', (data,res) => {
                 }
                 for (var i = 0; i < history.messages.length; ++i) {
                     let tmpMessage = history.messages[i];
-                    let msg_html = MessageDirector.GetInstance.createHTML(tmpMessage, avatar_store.get(user), user);
+                    let msg_html = MessageDirector.GetInstance.createHTML(tmpMessage, avatar_store.get(tmpMessage.sender), user);
                     messages.appendChild(msg_html);
                 }
                 messageBox.scrollTop = messageBox.scrollHeight;
@@ -254,7 +308,11 @@ socket.on('user:get_friends', (data,res) => {
             });
         }
     };
-    let friend_name = data;
+    let friend_name = name;
+    let path = 'data/avatar/user.png';
+    if(avatar_store.get(friend_name) !== 'default'){
+        path = url_base + image_base + avatar_store.get(friend_name);
+    }
     let ul_friends = $$('friends');
     let li_friend = document.createElement('li');
     li_friend.id = 'friend_' + friend_name;
@@ -265,11 +323,11 @@ socket.on('user:get_friends', (data,res) => {
         ' <span aria-hidden="true" style="color: white">×</span>' +
         '<span class="sr-only">Close</span>'+
         '</button>'+
-            '<div class="avatar" style="float: left; margin-left: 1em; width: 25%">' +
-                '<img alt="avatar" id=' + friend_name + '_avatar src= "/' + path + '"/>' +
-            '</div >' +
-            '<div class="main_li" style="width: 50%">' +
-                '<div class="username">' + friend_name + '</div>';
+        '<div class="avatar" style="float: left; margin-left: 1em; width: 25%">' +
+        '<img alt="avatar" id=' + friend_name + '_avatar src= "' + path + '"/>' +
+        '</div >' +
+        '<div class="main_li" style="width: 50%">' +
+        '<div class="username">' + friend_name + '</div>';
     li_friend.onclick = onclick_friend;
     ul_friends.appendChild(li_friend);
     $('#delete_friend_'+friend_name).click(
@@ -284,8 +342,7 @@ socket.on('user:get_friends', (data,res) => {
             }
         }
     );
-
-});
+}
 
 // socket.on('user:get_avatar', (res) => {
 //   console.log(res);
@@ -330,10 +387,10 @@ socket.on('get_all_info', (res)=>{
     div_user_username.textContent = user.username;
 
     if(user.friends) for (let i = 0; i < user.friends.length; ++i) {
-        socket.emit('user:get_friends',{user: user.friends[i]});
+        addFriendsList(user.friends[i]);
     }
     if(user.ingroup) for (let i = 0; i < user.ingroup.length; ++i){
-        socket.emit('user:get_groups',{groupid: user.ingroup[i]});
+        addGroupsList(user.ingroup[i]);
     }
 });
 
@@ -352,7 +409,7 @@ $$('send').onclick = () => {
       socket.emit('chat:message', message);
   else
       socket.emit('groupchat:message', message, message_store.GetMessage('group_members_' + receiver));
-  // message_store.AppendMessage(receiver,message.message);
+  message_store.AppendMessage(receiver,message.message);
   input.value = '';
 };
 
@@ -362,7 +419,7 @@ socket.on('picture:query', (res) => {
     //图片已存在，发送消息
     console.log('image exists');
     if (change_avater){
-        socket.emit('user:avatar',{user: authinfo.username, imageInfo: upload_image.md5 + '.' + upload_image.suffix});
+        socket.emit('user:avatar',{user: authinfo.username, md5: upload_image.md5, suffix: upload_image.suffix});
         change_avater = false;
         avater_md5 = null;
         return
@@ -598,12 +655,12 @@ socket.on('group:del',(res)=>{
 /* auto login */
 
 //TODO: 为了测试把自动登录关掉了
-authinfo = store.get('authinfo'); // 用户登陆信息 { username: str, password: str }
-user = authinfo ? authinfo.username : null; // 暂存用户名
-if(authinfo) {
-  console.log('[Init] try auto login');
-  socket.emit('user:login', authinfo);
-}
+// authinfo = store.get('authinfo'); // 用户登陆信息 { username: str, password: str }
+// user = authinfo ? authinfo.username : null; // 暂存用户名
+// if(authinfo) {
+//   console.log('[Init] try auto login');
+//   socket.emit('user:login', authinfo);
+// }
 
 /* ok, now show HTML body*/
 $$('body').style.visibility = 'visible';
