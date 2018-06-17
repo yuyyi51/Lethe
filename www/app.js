@@ -219,6 +219,15 @@ function addGroupsList(groupid) {
         let groupinfo = res;
         let path = 'data/avatar/group.png';
         let onclick_group = function () {
+            $$('input').readOnly = false;
+            if (selected_receiver === this.id){
+                return;
+            }
+            if (selected_receiver !== null){
+                $$(selected_receiver).style.backgroundColor = "";
+            }
+            $$(this.id).style.backgroundColor = "#2626ff";
+            selected_receiver = this.id;
             is_group_chat = true;
             console.log(this.id + ' tag clicked');
             //
@@ -606,8 +615,8 @@ socket.on('chat:add', (res) => {        //处理返回结果
             alert("已是好友！");
         }
         else if (res === 'success') {
-            window.location.reload(true);
             alert("添加成功");
+            addFriendsList($('#add-friend-name').val());
         }
         else {
             alert("其它错误！");
@@ -663,8 +672,8 @@ socket.on('group:add', (res) => {
         alert('该群聊不存在！');
     }
     else if (res==='success'){
-        window.location.reload(true);
         alert("添加成功");
+        addGroupsList(Number($('#add-group-name').val()));
     }
     else {
         alert("其它错误！");
@@ -678,16 +687,27 @@ socket.on('group:del',(res)=>{
    }
 });
 
+//更新群员缓存
+socket.on('renew:members',(username, GID, type)=>{
+    let GroupMembersID = 'group_members_' + GID;
+    if(type === 'add'){
+        message_store.AppendMembers(GroupMembersID, username);
+    }
+    else if(type === 'delete'){
+        message_store.DeleteMembers(GroupMembersID, username);
+    }
+});
+
 // Finally: main start
 /* auto login */
 
 //TODO: 为了测试把自动登录关掉了
-// authinfo = store.get('authinfo'); // 用户登陆信息 { username: str, password: str }
-// user = authinfo ? authinfo.username : null; // 暂存用户名
-// if(authinfo) {
-//   console.log('[Init] try auto login');
-//   socket.emit('user:login', authinfo);
-// }
+authinfo = store.get('authinfo'); // 用户登陆信息 { username: str, password: str }
+user = authinfo ? authinfo.username : null; // 暂存用户名
+if(authinfo) {
+  console.log('[Init] try auto login');
+  socket.emit('user:login', authinfo);
+}
 
 /* ok, now show HTML body*/
 $$('body').style.visibility = 'visible';

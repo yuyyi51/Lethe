@@ -47,7 +47,7 @@ TextMessageBuilder.prototype.createHTML = function (message, avatarsrc, selfname
     let content = message.content;
     content = content.replace(/\n/g, '<br>');
     let sender = message.sender;
-    if(avatarsrc === 'default')
+    if(avatarsrc === 'default' || avatarsrc === null || avatarsrc === undefined)
     {
         avatarsrc = 'data/avatar/user.png';
     }
@@ -97,7 +97,7 @@ ImageMessageBuilder.prototype.createMessage = function(plain_message, sender, ta
 ImageMessageBuilder.prototype.createHTML = function (message, avatarsrc, selfname) {
     let image_url = message.content.match(/\[img:(\S*)\]/)[1];
     let sender = message.sender;
-    if(avatarsrc === 'default')
+    if(avatarsrc === 'default' || avatarsrc === null || avatarsrc === undefined)
     {
         avatarsrc = 'data/avatar/user.png';
     }
