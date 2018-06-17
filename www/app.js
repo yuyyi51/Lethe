@@ -12,6 +12,9 @@ let is_group_chat = false;
 let avatar_store = new Map();
 let selected_receiver = null;
 let group_config = null;
+var nowreceiver = null;
+var nowreceivergroup = null;
+
 
 function appendMessage(html) {
     $$('messages').appendChild(html);
@@ -131,8 +134,85 @@ const messages = $$('messages');  // 当前窗口的消息
 //let receiver;                     // 当前窗口的发送对象
 let receiver = 'test2' ;      //测试用
 var messageBox = document.getElementById('messages');
+var timer = null;
+
+
+function FlashTitle(title,content){
+
+    var index = 0;
+    clearInterval(timer);
+    timer = setInterval(function () {
+        if (index % 2) {
+            $('title').text('【　　　】from '+title );//这里是中文全角空格，其他不行
+        } else {
+            $('title').text('【新消息】from '+title );
+        }
+        index++;
+
+        if (index > 20) {
+            clearInterval(timer);
+            document.title = "Lethe";
+        }
+    }, 500);
+
+
+
+    var hiddenProperty = 'hidden' in document ? 'hidden' :
+        'webkitHidden' in document ? 'webkitHidden' :
+            'mozHidden' in document ? 'mozHidden' :
+                null;
+    if (!document[hiddenProperty]) {
+        //document.title='被发现啦(*´∇｀*)';
+        //document.title="Lethe";
+    }
+    else{
+        var a = {
+            body:content,
+            icon:'T:\\Lethe\\Lethe-master\\image\\noti.png'
+        }
+        newNotification(title+' send you a message!',a);
+    }
+
+}
+
+function clearTitle(){
+    clearInterval(timer);
+    document.title="Lethe";
+}
+function newNotification(title, options) {
+    title = title || '新的消息'
+    options = options || {
+        body: '默认消息',
+        icon: 'image/noti.png'
+    }
+    return new Notification(title, options);
+}
+
+
+
 
 socket.on('chat:message', (msg) => {
+
+    console.log(msg.message.content);
+    FlashTitle(msg.sender,msg.message.content);
+if(nowreceiver !=msg.sender)
+{
+
+    var a = {
+        body: msg.message.content,
+        icon: ''
+
+    }
+    newNotification(msg.sender+' send you a message!',a);
+
+    $$('friend_unreadTag_' + msg.sender).style.display = "block";
+    var num = $$('friend_unreadNum_' + msg.sender).innerHTML;
+    var numInt = parseInt(num) + 1;
+    $$('friend_unreadNum_' + msg.sender).innerHTML = numInt;
+}
+
+
+
     if (message_store.Exist(msg.sender)) {
         message_store.AppendMessage(msg.sender, msg.message);
     }
@@ -142,6 +222,24 @@ socket.on('chat:message', (msg) => {
 });
 
 socket.on('groupchat:message', (msg) => {
+    if(msg.sender!=$$('user_username').innerText){
+        FlashTitle("新群聊消息",msg.content);
+    }
+if(nowreceivergroup!=msg.target && msg.sender!=$$('user_username').innerText) {
+
+    var a = {
+        body: "快去看看！",
+        icon: ''
+
+    }
+    newNotification("新群聊消息！",a);
+
+    $$('group_unreadTag_' + msg.target).style.display = "block";
+    var num = $$('group_unreadNum_' + msg.target).innerHTML;
+    var numInt = parseInt(num) + 1;
+    $$('group_unreadNum_' + msg.target).innerHTML = numInt;
+}
+
     if(msg.sender !== authinfo.username){
         message_store.AppendMessage(msg.target, msg.message);
         if(receiver === msg.target)
@@ -149,6 +247,8 @@ socket.on('groupchat:message', (msg) => {
     }
     messageBox.scrollTop = messageBox.scrollHeight;
 });
+
+
 
 /*
 socket.on('user:get_groups', (res)=>{
@@ -222,6 +322,10 @@ function addGroupsList(groupid) {
         let groupinfo = res;
         let path = 'data/avatar/group.png';
         let onclick_group = function () {
+            $$('group_unreadTag_'+groupid).style.display = "none";
+            $$('group_unreadNum_'+groupid).innerHTML = '0';
+            nowreceiver = null;
+            nowreceivergroup = groupid;
             $$('input').readOnly = false;
             if (selected_receiver === this.id){
                 return;
@@ -264,7 +368,10 @@ function addGroupsList(groupid) {
             '<img alt="avatar" id=' + 'group_' + groupinfo.groupid + '_avatar src= "/' + path + '"/>' +
             '</div >' +
             '<div class="main_li" style="width: 50%">' +
-            '<div class="username">' + groupinfo.groupname + '<i style="float: right" class="material-icons" id="conf_' + groupinfo.groupid + '">build</i></div>';
+            '<div class="username">' + groupinfo.groupname +'<div style="float:right;display: none"  id="group_unreadTag_'+  groupinfo.groupid +   '">'+'<span style="border-radius: 50%;    height: 20px;    width: 20px;    display: inline-block;    background: #FA676A;      vertical-align: top;">'+
+            '<span style="display: block;    color: #FFFFFF;    height: 20px;    line-height: 20px;    text-align: center" id="group_unreadNum_'+groupinfo.groupid+'">0</span>'+
+            '</span>'+'</div>' +'<i style="float: right" class="material-icons" id="conf_' + groupinfo.groupid + '">build</i></div>'
+            ;
         li_groups.onclick = onclick_group;
         message_store.StoreHistory(groupinfo.groupid, groupinfo.messages);
         message_store.StoreHistory('group_members_' + groupinfo.groupid, groupinfo.members);
@@ -292,7 +399,13 @@ function addGroupsList(groupid) {
 
 function addFriendsList(name) {
     let onclick_friend = function () {
+        nowreceivergroup = null;
+        nowreceiver =  name;
+        clearInterval(timer);
+        document.title="Lethe";
         $$('input').readOnly = false;
+        $$('friend_unreadTag_'+friend_name).style.display = "none";
+        $$('friend_unreadNum_'+friend_name).innerHTML = '0';
         if (selected_receiver === this.id){
             return;
         }
@@ -361,7 +474,10 @@ function addFriendsList(name) {
         '<img alt="avatar" id=' + friend_name + '_avatar src= "' + path + '"/>' +
         '</div >' +
         '<div class="main_li" style="width: 50%">' +
-        '<div class="username">' + friend_name + '</div>';
+        '<div class="username" style="float:left">' + friend_name + '</div>'+
+    '<div style="float:right;display: none"  id="friend_unreadTag_'+  friend_name +   '">'+'<span style="border-radius: 50%;    height: 20px;    width: 20px;    display: inline-block;    background: #FA676A;      vertical-align: top;">'+
+    '<span style="display: block;    color: #FFFFFF;    height: 20px;    line-height: 20px;    text-align: center" id="friend_unreadNum_'+friend_name+'">0</span>'+
+    '</span>'+'</div>';
     li_friend.onclick = onclick_friend;
     ul_friends.appendChild(li_friend);
     $('#delete_friend_'+friend_name).click(
@@ -891,3 +1007,11 @@ document.body.addEventListener('click', function (event)
         $('#select_emoji').popover('hide');
     }
 });
+window.onload = function () {
+    if(window.Notification){
+        if(Notification.permission === 'granted'){
+        }else{
+            Notification.requestPermission();
+        }
+    }
+}
