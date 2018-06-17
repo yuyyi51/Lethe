@@ -230,16 +230,6 @@ function addGroupsList(groupid) {
             selected_receiver = this.id;
             is_group_chat = true;
             console.log(this.id + ' tag clicked');
-            //
-            if (selected_receiver === this.id){
-                return;
-            }
-            if (selected_receiver !== null){
-                $$(selected_receiver).style.backgroundColor = "";
-            }
-            $$(this.id).style.backgroundColor = "#2626ff";
-            selected_receiver = this.id;
-            //
             let main = $$('main');
             main.style.visibility = 'visible';
             receiver = Number(this.id.replace('group_', ''));
