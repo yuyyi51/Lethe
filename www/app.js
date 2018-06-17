@@ -659,7 +659,7 @@ socket.on('group:add', (res) => {
     }
     else if (res==='success'){
         alert("添加成功");
-        addGroupsList($('#add-group-name').val());
+        addGroupsList(Number($('#add-group-name').val()));
     }
     else {
         alert("其它错误！");
