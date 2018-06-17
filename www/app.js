@@ -14,7 +14,10 @@ let selected_receiver = null;
 let group_config = null;
 var nowreceiver = null;
 var nowreceivergroup = null;
-
+var hiddenProperty = 'hidden' in document ? 'hidden' :
+    'webkitHidden' in document ? 'webkitHidden' :
+        'mozHidden' in document ? 'mozHidden' :
+            null;
 
 function appendMessage(html) {
     $$('messages').appendChild(html);
@@ -154,25 +157,12 @@ function FlashTitle(title,content){
             document.title = "Lethe";
         }
     }, 500);
-
-
-
-    var hiddenProperty = 'hidden' in document ? 'hidden' :
-        'webkitHidden' in document ? 'webkitHidden' :
-            'mozHidden' in document ? 'mozHidden' :
-                null;
     if (!document[hiddenProperty]) {
         //document.title='被发现啦(*´∇｀*)';
         //document.title="Lethe";
     }
     else{
-        var a = {
-            body:content,
-            icon:'T:\\Lethe\\Lethe-master\\image\\noti.png'
-        }
-        newNotification(title+' send you a message!',a);
     }
-
 }
 
 function clearTitle(){
@@ -183,7 +173,7 @@ function newNotification(title, options) {
     title = title || '新的消息'
     options = options || {
         body: '默认消息',
-        icon: 'image/noti.png'
+        icon: 'https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1529265914393&di=d7674e59ceee8914874e00178d2160e4&imgtype=0&src=http%3A%2F%2Fpic.58pic.com%2F10%2F81%2F55%2F47bOOOPIC9f.jpg'
     }
     return new Notification(title, options);
 }
@@ -200,10 +190,13 @@ if(nowreceiver !=msg.sender)
 
     var a = {
         body: msg.message.content,
-        icon: ''
+        icon: 'https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1529265914393&di=d7674e59ceee8914874e00178d2160e4&imgtype=0&src=http%3A%2F%2Fpic.58pic.com%2F10%2F81%2F55%2F47bOOOPIC9f.jpg'
 
     }
-    newNotification(msg.sender+' send you a message!',a);
+    if(document[hiddenProperty]){
+        newNotification(msg.sender+' send you a message!',a);
+    }
+
 
     $$('friend_unreadTag_' + msg.sender).style.display = "block";
     var num = $$('friend_unreadNum_' + msg.sender).innerHTML;
@@ -229,10 +222,12 @@ if(nowreceivergroup!=msg.target && msg.sender!=$$('user_username').innerText) {
 
     var a = {
         body: "快去看看！",
-        icon: ''
+        icon: 'https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1529265914393&di=d7674e59ceee8914874e00178d2160e4&imgtype=0&src=http%3A%2F%2Fpic.58pic.com%2F10%2F81%2F55%2F47bOOOPIC9f.jpg'
 
     }
-    newNotification("新群聊消息！",a);
+    if(document[hiddenProperty]) {
+        newNotification("新群聊消息！", a);
+    }
 
     $$('group_unreadTag_' + msg.target).style.display = "block";
     var num = $$('group_unreadNum_' + msg.target).innerHTML;
