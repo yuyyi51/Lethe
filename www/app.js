@@ -9,6 +9,7 @@ let upload_image = {};
 let change_avater = false;
 let avater_md5 = null;
 let is_group_chat = false;
+let selected_receiver = null;
 
 function appendMessage(html) {
     $$('messages').appendChild(html);
@@ -67,13 +68,6 @@ socket.on('user:login', (res) => {
   img.style.display = 'none';
   img.src = $$('user_avatar').src;
   img.id = authinfo.username + '_avatar';
-  /*////////////////////////////////////////
-    let imgtest2 = document.createElement('img');
-    imgtest2.id = 'test1_avatar';
-    imgtest2.style.display = 'none';
-    imgtest2.src = '/data/avatar/user.png';
-    $$('user_avatar').appendChild(imgtest2);
-    //////////////////////////////////////*/
   $$('user_avatar').appendChild(img);
   socket.emit('user:get_avatar',{user: authinfo.username});
   socket.emit('user:get_userinfo', authinfo, (userinfo) => {
@@ -153,6 +147,15 @@ socket.on('user:get_groups', (res)=>{
     let groupinfo = res;
     let path = 'data/avatar/group.png';
     let onclick_group = function () {
+        $$('input').readOnly = false;
+        if (selected_receiver === this.id){
+            return;
+        }
+        if (selected_receiver !== null){
+            $$(selected_receiver).style.backgroundColor = "";
+        }
+        $$(this.id).style.backgroundColor = "#2626ff";
+        selected_receiver = this.id;
         is_group_chat = true;
         console.log(this.id + ' tag clicked');
         let main = $$('main');
@@ -211,6 +214,15 @@ socket.on('user:get_friends_avatar', (data,res) => {
         path = url_base + image_base + res ;
     }
     let onclick_friend = function () {
+        $$('input').readOnly = false;
+        if (selected_receiver === this.id){
+            return;
+        }
+        if (selected_receiver !== null){
+            $$(selected_receiver).style.backgroundColor = "";
+        }
+        $$(this.id).style.backgroundColor = "#2626ff";
+        selected_receiver = this.id;
         is_group_chat = false;
         console.log(this.id + ' tag clicked');
         let main = $$('main');
@@ -298,6 +310,7 @@ socket.on('user:get_avatar', (res) => {
 });
 
 $$('send').onclick = () => {
+  if (input.value.length === 0) return;
   console.log('message to sent to ' + receiver + ' from ' + user);
   let msg_html = MessageDirector.GetInstance.createHTMLFromPlain(input.value);
   //let msg_escape = message2escape(input.value);
