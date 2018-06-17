@@ -12,6 +12,20 @@ MessageStore.prototype.AppendMessage = function(name , message){
         this.StoreHistory(name, []);
     this.chats.get(name).push(message);
 };
+MessageStore.prototype.AppendMembers = function(name , member){
+    if (this.Exist(name) === undefined)
+        this.StoreHistory(name, []);
+    this.chats.get(name).push(member);
+};
+MessageStore.prototype.DeleteMembers = function(name , member){
+    let tmpArray = this.chats.get(name);
+    for(let i=0;i<tmpArray.length;i++){
+        if(tmpArray[i] === member){
+            this.chats.get(name).remove(i);
+            break;
+        }
+    }
+};
 MessageStore.prototype.GetMessage = function(name) {
     return this.chats.get(name);
 };
