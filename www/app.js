@@ -264,7 +264,7 @@ function addGroupsList(groupid) {
             '<img alt="avatar" id=' + 'group_' + groupinfo.groupid + '_avatar src= "/' + path + '"/>' +
             '</div >' +
             '<div class="main_li" style="width: 50%">' +
-            '<div class="username">' + groupinfo.groupname + '<i style="float: right" class="material-icons" id="conf_' + groupinfo.groupid + '">build</i></div>';
+            '<div class="username">' + (groupinfo.groupname || ( "群组_"+groupinfo.groupid )) + '<i style="float: right" class="material-icons" id="conf_' + groupinfo.groupid + '">build</i></div>';
         li_groups.onclick = onclick_group;
         message_store.StoreHistory(groupinfo.groupid, groupinfo.messages);
         message_store.StoreHistory('group_members_' + groupinfo.groupid, groupinfo.members);
