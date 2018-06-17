@@ -366,10 +366,9 @@ function addGroupsList(groupid) {
             '<img alt="avatar" id=' + 'group_' + groupinfo.groupid + '_avatar src= "/' + path + '"/>' +
             '</div >' +
             '<div class="main_li" style="width: 50%">' +
-            '<div class="username"><span>' + (groupinfo.groupname || ( "群组_"+groupinfo.groupid )) + '</span><i style="float: right" class="material-icons" id="conf_' + groupinfo.groupid + '">build</i></div>';
-            '<div class="username">' + groupinfo.groupname +'<div style="float:right;display: none"  id="group_unreadTag_'+  groupinfo.groupid +   '">'+'<span style="border-radius: 50%;    height: 20px;    width: 20px;    display: inline-block;    background: #FA676A;      vertical-align: top;">'+
+            '<div class="username"><span>' + (groupinfo.groupname || ( "群组_"+groupinfo.groupid )) + '<div style="float:right;display: none"  id="group_unreadTag_'+  groupinfo.groupid +  '">'+'<span style="border-radius: 50%;    height: 20px;    width: 20px;    display: inline-block;    background: #FA676A;      vertical-align: top;">'+
             '<span style="display: block;    color: #FFFFFF;    height: 20px;    line-height: 20px;    text-align: center" id="group_unreadNum_'+groupinfo.groupid+'">0</span>'+
-            '</span>'+'</div>' +'<i style="float: right" class="material-icons" id="conf_' + groupinfo.groupid + '">build</i></div>'
+            '</span>'+'</div>'+ '</span><i style="float: right" class="material-icons" id="conf_' + groupinfo.groupid + '">build</i></div>'
             ;
         li_groups.onclick = onclick_group;
         message_store.StoreHistory(groupinfo.groupid, groupinfo.messages);
