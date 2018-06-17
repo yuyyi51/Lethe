@@ -1,0 +1,41 @@
+{
+  "name": "lethe",
+  "version": "0.0.1",
+  "description": "Lethe",
+  "homepage": "http://what.the.fuck/",
+  "author": "Lethe Project Dev Group",
+  "contributors": [
+    {
+      "name": "Kahsolt",
+      "github": "http://github.com/Kahsolt"
+    }
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Kahsolt/lethe.git"
+  },
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.16.3",
+    "jquery": "^3.3.1",
+    "mongodb": "^3.0.7",
+    "socket.io": "^2.1.0",
+    "store": "^2.0.12",
+    "spark-md5": "^3.0.0"
+  },
+  "files": [
+    "lib/",
+    "www/",
+    "server.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">= 6.0.0",
+    "npm": ">= 3.0.0"
+  }
+}
