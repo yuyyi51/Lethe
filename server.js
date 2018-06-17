@@ -65,6 +65,16 @@ io.on('connection', (socket) => {
     data.password = SparkMD5.hash(config.salt + data.password + config.salt);
     db.login(data, (res) => {
       if (res === true) {
+
+        //防止重复登录
+        if (mediator.GetSocketFromUser(data.username) !== undefined){
+            //重复登录
+            let s = mediator.GetSocketFromUser(data.username);
+            s.emit('user:offline');
+            mediator.DeleteUser(s);
+        }
+        //////////////////
+
         mediator.AddUser(data.username, socket);
         /*
         socket_user.set(socket.id, data.username);

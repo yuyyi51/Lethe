@@ -50,6 +50,10 @@ socket.on('user:register', (res) => {
           ? " register succeed, please login."
           : " register failed."));
 });
+socket.on('user:offline', () => {
+    alert("检测到有其它终端登录该账号，您已被强制下线");
+    change_login_status(false);
+});
 $$('btn_login').onclick = () => {
   authinfo = {
     username: $$('username').value,
@@ -217,6 +221,16 @@ function addGroupsList(groupid) {
         let onclick_group = function () {
             is_group_chat = true;
             console.log(this.id + ' tag clicked');
+            //
+            if (selected_receiver === this.id){
+                return;
+            }
+            if (selected_receiver !== null){
+                $$(selected_receiver).style.backgroundColor = "";
+            }
+            $$(this.id).style.backgroundColor = "#2626ff";
+            selected_receiver = this.id;
+            //
             let main = $$('main');
             main.style.visibility = 'visible';
             receiver = Number(this.id.replace('group_', ''));
