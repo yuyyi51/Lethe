@@ -45,6 +45,7 @@ TextMessageBuilder.prototype.createMessage = function (plain_message, sender, ta
 
 TextMessageBuilder.prototype.createHTML = function (message, avatarsrc, selfname) {
     let content = message.content;
+    content = content.replace(/\n/g, '<br>');
     let sender = message.sender;
     if(avatarsrc === 'default')
     {
@@ -65,6 +66,7 @@ TextMessageBuilder.prototype.createHTML = function (message, avatarsrc, selfname
 };
 
 TextMessageBuilder.prototype.createHTMLFromPlain = function (plain_message) {
+    plain_message = plain_message.replace(/\n/g, '<br>');
     let html = document.createElement('article');
     html.className = 'right';
     html.innerHTML = '<div class="avatar">' +
