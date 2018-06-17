@@ -1,46 +1,119 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <!-- Meta Tags -->
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <!-- CSS -->
-  <link rel="stylesheet" type="text/css" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css" />
-  <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
-  <link rel="stylesheet" type="text/css" href="app.css" />
+    <!-- Meta Tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <!-- CSS -->
+    <link rel="stylesheet" type="text/css" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css"/>
+    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/icon?family=Material+Icons"/>
+    <link rel="stylesheet" type="text/css" href="app.css"/>
 
-  <title>Lethe</title>
+    <title>Lethe</title>
 </head>
 <body id="body" style="background-color: lightcyan; visibility: hidden;">
 
-  <!-- 未登录时显示注册/登陆表单 -->
-  <article id="entry" style="position:absolute; margin: auto; width: 300px;">
+<!-- 未登录时显示注册/登陆表单 -->
+<article id="entry" style="position:absolute; margin: auto; width: 300px;">
     <h1>Lethe</h1>
-    <hr />
+    <hr/>
     <div class="form-group">
-      <label>Username</label>
-      <input type="text" class="form-control" id="username">
+        <label>Username</label>
+        <input type="text" class="form-control" id="username">
     </div>
     <div class="form-group">
-      <label>Password</label>
-      <input type="password" class="form-control" id="password">
+        <label>Password</label>
+        <input type="password" class="form-control" id="password">
     </div>
     <button type="button" class="btn btn-primary" id="btn_register">注册</button>
     <button type="button" class="btn btn-primary" id="btn_login">登录</button>
-  </article>
+</article>
 
-  <!-- 登录后显示主界面 -->
-  <article id="container" style="width: 100%; height: 100%; visibility: hidden;">
-    <aside>
-      <header>
-        <div id="div_avatar" class="avatar">
-          <img alt="avatar" id="user_avatar" src="/data/avatar/user.png"/>
+<!-- 登录后显示主界面 -->
+
+
+<article id="container" style="width: 100%; height: 100%; visibility: hidden;">
+    <div id="add-body">
+
+        <div class="modal-header" style="background-color: #343E48; height: fit-content">
+            <!--<h5 class="modal-title" id="addFriendModalLabel" style="font-size: 18px;">添加好友</h5>-->
+            <!--好友-->
+            <button type="button" id="add-friend" class="btn">
+                <a class="material-icons" href="javascript:" style="color: #ffffff; text-decoration: none;position: center" >person_add</a>
+            </button>
+            <!--群聊-->
+            <button type="button" id="add-group" class="btn">
+                <a class="material-icons" href="javascript:" style="color: #ffffff; text-decoration: none;position: center" >group_add</a>
+            </button>
+            <button type="button" id="add-close" class="close" data-dismiss="modal">
+                <span aria-hidden="true" style="color: white">×</span>
+                <span class="sr-only">Close</span>
+            </button>
         </div>
-        <div id="user_username">123</div>
+        <div class="modal-body">
+            <!--添加好友-->
+            <section class="v5-input-txt" id="add-friend-body">
+                <form id="add-friend-form"  autocomplete="off">
+                    <li class="form-group">
+                        <input class="form-control" id="add-friend-name" maxlength="50"  placeholder="请输入您要添加的好友账号" type="text">
+                    </li>
+                </form>
+                <div class="marginB10">
+                    <button id="add-friend-btn" type="button" class="btn btn-block btn-primary">添加好友</button>
+                </div>
+                <div class="msg" id="add-friend-msg" style="display: none;">cuo</div>
+            </section>
+            <!--加入群聊或者创建群聊-->
+            <section class="v5-input-txt" style="display: none" id="add-group-body">
+                <div class="marginB10">
+                    <button id="create-group-btn" type="button" class="btn btn-block btn-primary">创建群聊</button>
+                </div>
+                <form id="add-group-form"  autocomplete="off">
+                    <li class="form-group">
+                        <input class="form-control" id="add-group-name" maxlength="50"  placeholder="请输入您要加入的群聊账号" type="text">
+                    </li>
+                </form>
+                <div class="marginB10">
+                    <button id="add-group-btn" type="button" class="btn btn-block btn-primary">加入群聊</button>
+                </div>
+                <div class="msg" id="add-group-msg" style="display: none;">cuo</div>
+            </section>
+        </div>
+
+    </div>
+    <div id="conf-body">
+        <div class="modal-header" style="background-color: #343E48; height: fit-content">
+            群管理
+            <button type="button" id="conf-close" class="close" data-dismiss="modal">
+                <span aria-hidden="true" style="color: white">×</span>
+                <span class="sr-only">Close</span>
+            </button>
+        </div>
+        <div class="modal-body">
+            <section class="v5-input-txt" id="rename-group-body">
+                <form id="rename-group-form"  autocomplete="off">
+                    <li class="form-group">
+                        <input class="form-control" id="rename-group-name" maxlength="50"  placeholder="输入群名称..." type="text">
+                    </li>
+                </form>
+                <div class="marginB10">
+                    <button id="rename-group-btn" type="button" class="btn btn-block btn-primary">重命名</button>
+                </div>
+            </section>
+        </div>
+    </div>
+    <div id="add-bg"></div>
+    <aside>
+        <header>
+            <div id="div_avatar" class="avatar">
+                <img alt="avatar" id="user_avatar" src="/data/avatar/user.png"/>
+            </div>
+        <div id="user_username"></div>
         <div>
           <input id="change_avatar" style="display: none" type="file">
-          <a class="material-icons" href="javascript:" style="color: #ffffff; text-decoration: none" id="log_out">exit_to_app</a>
-          <a class="material-icons" href="javascript:" style="color: #ffffff; text-decoration: none" id="user_info">person</a>
+            <a class="material-icons" href="javascript:" style="color: #ffffff; text-decoration: none" id="log_out">exit_to_app</a>
+            <!--a class="material-icons" href="javascript:" style="color: #ffffff; text-decoration: none" id="user_info">person</a-->
+            <a class="material-icons" href="javascript:" style="color: #ffffff; text-decoration: none" id="add-btn">add_circle_outline</a>
         </div>
 
       </header>
@@ -58,13 +131,14 @@
         </div>
       </footer>
       <footer style="height: 25%">
-        <textarea id="input" placeholder="" style="height: 100%;"></textarea>
+        <textarea id="input" readonly placeholder="" style="height: 100%; "></textarea>
         <div style="position: absolute; right: 10px; bottom: 10px">
           <i id="send" class="material-icons">send</i>
         </div>
       </footer>
     </section>
-  </article>
+</article>
+
 
   <!-- JavaScript -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.js"></script>
@@ -74,6 +148,8 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.0/socket.io.dev.js"></script>
   <script src="https://int-2.cn/script/spark-md5/spark-md5.min.js"></script>
   <script src="/socket.io/socket.io.js"></script> <!-- this script is provided by socket.io at runtime -->
+  <script src="message_builder.js"></script>
+  <script src="message_store.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

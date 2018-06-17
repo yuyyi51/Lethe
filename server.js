@@ -8,6 +8,7 @@ const SparkMD5 = require('spark-md5');
 const config = require('./lib/config');
 const mongodb = require('./lib/db');
 const db = new mongodb(config.db);
+const message_mediator = require('./lib/message_mediator');
 
 // http
 app.use('/', express.static(__dirname + '/www'));
@@ -15,18 +16,31 @@ http.listen(config.http.port, () => {
   console.log('listening on *:' + config.http.port);
 });
 
+const mediator = new message_mediator();
+
 // socket.io
 const socket_user = new Map(); // socket.id -> username
 const user_socket = new Map(); // username -> socket
 io.on('connection', (socket) => {
   console.log('visitor connected.');
+
+
   socket.on('disconnect', () => {
+    let u = mediator.GetUserFromSocket(socket);
+    if(u !== undefined) console.log(u + ' disconnected.');
+    mediator.DeleteUser(socket);
+    /*
     let u = socket_user.get(socket.id);
     if(u !== undefined) console.log(u + ' disconnected.');
     user_socket.delete(u);
     socket_user.delete(socket.id);
+    */
   });
 
+
+  function getUsername(){
+    return mediator.GetUserFromSocket(socket);
+  }
 
   /*****************/
   /* Part 1 : User */
@@ -51,8 +65,21 @@ io.on('connection', (socket) => {
     data.password = SparkMD5.hash(config.salt + data.password + config.salt);
     db.login(data, (res) => {
       if (res === true) {
+
+        //防止重复登录
+        if (mediator.GetSocketFromUser(data.username) !== undefined){
+            //重复登录
+            let s = mediator.GetSocketFromUser(data.username);
+            s.emit('user:offline');
+            mediator.DeleteUser(s);
+        }
+        //////////////////
+
+        mediator.AddUser(data.username, socket);
+        /*
         socket_user.set(socket.id, data.username);
         user_socket.set(data.username, socket);
+        */
       }
       console.log(data.username + " login " +
           (res === true ? "succeed." : "failed."));
@@ -60,11 +87,17 @@ io.on('connection', (socket) => {
     });
   });
 
+  socket.on('get_all_info', ()=>{
+      db.get_user_to_avatar((res)=>{
+          socket.emit('get_all_info', res);
+      });
+  });
+
   // desc:  更换头像
   // on:    { user: str, md5: str }
   // emit:  { avatar: url }
   socket.on('user:avatar', (data) => {
-    db.change_avatar(data.user, data.md5, (res) => {
+    db.change_avatar(data.user, data.md5, data.suffix, (res) => {
       socket.emit('user:avatar', res);
     });
   });
@@ -72,10 +105,26 @@ io.on('connection', (socket) => {
     // on:    { user: str }
     // emit:  { avatar: uri }
   socket.on('user:get_avatar', (data) => {
-    console.log(data);
+    // console.log(data);
     db.get_avatar(data.user, (res) => {
       socket.emit('user:get_avatar', res);
     });
+  });
+
+  socket.on('user:get_friends', (data) => {
+      // console.log(data);
+      db.get_avatar(data.user, (res) => {
+          socket.emit('user:get_friends',data.user, res);
+      });
+  });
+
+  socket.on('user:get_groups', (data, fn) => {
+      db.get_group_info(data.groupid, (res) => {
+          // if(res == null)
+          //   return;
+          // socket.emit('user:get_groups', res);
+          fn(res);
+      });
   });
   // desc:  搜索用户
   // on:    { username: str }
@@ -96,42 +145,112 @@ io.on('connection', (socket) => {
 
   });
 
-  // desc:  新增好友(新增会话)
-  // on:    { username: str }
-  // emit:  { username: str: avatar: uri, chat_id: str }
-  socket.on('chat:add', (data) => {
+    // desc:  新增好友(新增会话)
+    // on:    { requestUserName: str ,requestFriendName: str}
+    // emit:  result
+    socket.on('chat:add', (data) => {
+        db.appand_friend(data.requestUserName, data.requestFriendName, (res) => {
+            socket.emit('chat:add', res);          //返回客户端结果
+        });
+    });
 
-  });
+    // desc: 删除好友(删除会话)
+    // on: { requestUserName: str ,requestFriendName: str}
+    // emit: bool
+    socket.on('chat:del', (data) => {
+        db.delete_friend(data.requestUserName, data.requestFriendName, (res) => {
+            if (res) {
+                socket.emit('chat:del', true);
+            }
+        });
+    });
 
-  // desc: 删除好友(删除会话)
-  // on: { username: str }
-  // emit: bool
-  socket.on('chat:del', (data) => {
+    //desc: 创建群聊
+    //on: requestUsername: str
+    //emit: bool
+    socket.on('group:create',(requestUsername)=>{
+        db.create_group(requestUsername, (res)=>{
+            socket.emit('group:crate',res);
+        });
+    });
 
-  });
+    //desc: 加入群聊
+    //on：{requestUserName: str ,requestGroupId: int}
+    //emit: result
+    socket.on('group:add', (data) => {
+        db.join_group(data.requestUserName, data.requestGroupId, (res) => {
+            socket.emit('group:add', res);
+        });
+    });
+
+    //desc: 退出群聊
+    //on: {requestUserName: str ,requestGroupId: int}
+    //emit: bool
+    socket.on('group:del',(data)=>{
+        db.exit_group(data.requestUserName,data.requestGroupId,(res)=>{
+            socket.emit('group:del',res);
+        })
+    });
 
   // desc:  获取某个会话的历史记录
   // on:    { chat_id: str, limit: int }
   // emit:  [{ sender: @user, content: str }]
-  socket.on('chat:history', (data) => {
+  socket.on('chat:history', (data, fn) => {
+    let sender = data.sender;
+    let receiver = data.receiver;
+    let id1 = sender < receiver ? sender : receiver;
+    let id2 = sender < receiver ? receiver : sender;
+    db.get_chat_history(id1, id2, (res) =>{
+      fn(res);
+    });
+  });
 
+  socket.on('groupchat:history', (data, fn) => {
+      db.get_group_chat_history(data, (res) =>{
+          fn(res);
+      });
+  });
+
+  socket.on('user:get_userinfo',(data,fn) =>{
+    db.get_userinfo({username:data.username},(res)=>{
+      if(res!=null)
+        fn(res);
+      else
+        alert('error findings!');
+    });
   });
 
   // desc:  在某个会话中新增消息
-  // on:    { chat_id: str, sender: str, receiver: str, content: str }
+  // on:    {
+    // sender: str,
+    // target: str,
+    // message: {
+    // 	  sender: str,
+    //    content: str,
+    //    timestamp: datetime }
+    // }
   // emit:  bool
   socket.on('chat:message', (data) => {
+    data.timestamp = new Date();
     db.append_chat_history(data);
-    let recv_sock = user_socket.get(data.receiver);
-    if (recv_sock !== undefined) {
-      recv_sock.emit('chat:message', {
-        sender: data.sender,
-        receiver: data.receiver,
-        content: data.content
-      });
-    }
+    mediator.SendMessageTo(data.target, data);
   });
 
+  socket.on('groupchat:message', (message, members)=>{
+      message.timestamp = new Date();
+      db.append_group_chat_history(message);
+      mediator.SendMessageToGroup(members, message);
+  });
+
+  //********Group Management*********//
+
+    // desc:  调整群聊名称
+    // on:    { chat_id: str, name: str }
+
+  socket.on('groupchat:rename', (data) => {
+      console.log("Rename: " + data);
+      db.rename_group(data.chat_id, data.name)
+  });
 
   /**********************/
   /* Part 3 : Resources */
@@ -155,7 +274,7 @@ io.on('connection', (socket) => {
     //console.log(data);
     let filename = data.md5 + '.' + data.suffix;
     let imagebuffer = new Buffer(data.pic.replace(/^data:image\/\w+;base64,/, ""), 'base64');
-    let wstream = fs.createWriteStream(config.image.path + filename, {
+    let wstream = fs.createWriteStream(__dirname + config.image.path + filename, {
       flags : 'w',
       encoding: 'binary'
     });
@@ -163,16 +282,11 @@ io.on('connection', (socket) => {
       wstream.write(imagebuffer);
       wstream.end();
     });
-    db.upload_image({md5: data.md5, suffix: data.suffix}, (res) => {
-      socket.emit('picture:upload', res);
+    wstream.on('close', () => {
+      db.upload_image({md5: data.md5, suffix: data.suffix}, (res) => {
+          socket.emit('picture:upload', res);
+      });
     });
-  });
-
-  // 查询预定义表情符号列表
-  // on: null
-  // emit: [uri]
-  socket.on('emoji:list', (data) => {
 
   });
-
 });

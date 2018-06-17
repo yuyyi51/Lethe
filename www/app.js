@@ -2,12 +2,30 @@
 function $$(id) { return document.getElementById(id); }
 const socket = io.connect();
 socket.on('disconnect', () => { socket.open(); });
-//let url_base = socket.io.uri; // 'http://localhost:3000'
+var url_base = socket.io.uri; // 'http://localhost:3000'
+var image_base = '/data/images/';
 let authinfo, user;
 let upload_image = {};
 let change_avater = false;
 let avater_md5 = null;
-let url_base = 'D://images/';
+let is_group_chat = false;
+let avatar_store = new Map();
+let selected_receiver = null;
+let group_config = null;
+var nowreceiver = null;
+var nowreceivergroup = null;
+var hiddenProperty = 'hidden' in document ? 'hidden' :
+    'webkitHidden' in document ? 'webkitHidden' :
+        'mozHidden' in document ? 'mozHidden' :
+            null;
+
+function appendMessage(html) {
+    $$('messages').appendChild(html);
+}
+
+function isImage(content) {
+    return content.match(/\[img:.*\]/) !== null;
+}
 
 // Part 2: login status control
 function change_login_status(status) {
@@ -22,6 +40,7 @@ function change_login_status(status) {
     store.remove('authinfo');
     $$('entry').style.display = 'block';
     $$('container').style.visibility = 'hidden';
+    window.location.reload();
   }
 }
 
@@ -38,6 +57,10 @@ socket.on('user:register', (res) => {
           ? " register succeed, please login."
           : " register failed."));
 });
+socket.on('user:offline', () => {
+    alert("检测到有其它终端登录该账号，您已被强制下线");
+    change_login_status(false);
+});
 $$('btn_login').onclick = () => {
   authinfo = {
     username: $$('username').value,
@@ -53,67 +76,27 @@ socket.on('user:login', (res) => {
   }
 
   change_login_status(true);
-    socket.emit('user:get_avatar',{user: authinfo.username});
-  socket.emit('user:get_userinfo', authinfo, (userinfo) => {
-    let user = userinfo;
-    console.log(user);
-
-    // use authinfo info to build UI:
-    // 1. aside: self-profile & friends
-
-    let div_user_username = $$('user_username');
-    div_user_username.textContent = user.username;
-
-    /*
-    let img_user_avatar = $$('user_avatar');
-    mg_user_avatar.src = 'data/avatar/' + user.username + '.png';
-    */
-
-    let ul_friends = $$('friends');
-    let onclick_friend = function () {
-      console.log(this.id + ' tag clicked');
-      let main = $$('main');
-      main.style.visibility = 'visible';
-      receiver = this.id.replace('friend_', '');
-      console.log(user + ' chats with ' + receiver);
-
-      // 2. main: retrieve history
-      let sel = { sender: user, receiver: receiver };
-      socket.emit('get_history', sel, (history) => {
-        console.log(history);
-        while (messages.firstChild) {
-          messages.removeChild(messages.firstChild);
-        }
-
-        for (i = 0; i < history.length; ++i) {
-          let message = history[i]; // formated pure text
-
-          // find the sender, if not sender, place message in the left
-          let search_result = message.search('alt="' + user + '"');
-          // if not found, then it's not the message we sent
-          if (search_result === -1) {
-            message = message.replace('class="right"', " ");
-          }
-          messages.innerHTML += message;
-        }
-      });
-    };
-
-    if(user.friends) for (let i = 0; i < user.friends.length; ++i) {
-      let li_friend = document.createElement('li');
-      let friend_account = user.friends[i].account;
-      li_friend.id = 'friend_' + friend_account;
-      li_friend.innerHTML = '<div class="avatar">' +
-          '<img alt="avatar" id=' + friend_account + '_avatar src= "avatar/' + friend_account + '.png"/>' +
-          '</div >' +
-          '<div class="main_li">' +
-          '<div class="username">' + friend_account + '</div>' +
-          '</div >';
-      li_friend.onclick = onclick_friend;
-      ul_friends.appendChild(li_friend);
-    }
-  });
+  let img = document.createElement('img');
+  img.style.display = 'none';
+  img.src = $$('user_avatar').src;
+  img.id = authinfo.username + '_avatar';
+  $$('user_avatar').appendChild(img);
+  socket.emit('get_all_info');
+  // socket.emit('user:get_avatar',{user: authinfo.username});
+  // socket.emit('user:get_userinfo', authinfo, (userinfo) => {
+  //   let user = userinfo;
+  //   console.log(user);
+  //   let div_user_username = $$('user_username');
+  //   div_user_username.textContent = user.username;
+  //   if(user.friends) for (let i = 0; i < user.friends.length; ++i) {
+  //     socket.emit('user:get_friends',{user: user.friends[i]});
+  //   }
+  //   if(user.ingroup) for (let i = 0; i < user.ingroup.length; ++i){
+  //       socket.emit('user:get_groups',{groupid: user.ingroup[i]});
+  //   }
+  // });
 });
+
 $$('log_out').onclick = () => {  // as logout btn
   if (confirm('are you sure to logout?')) {
     change_login_status(false);
@@ -142,82 +125,436 @@ $$('change_avatar').addEventListener('change', function () {
         avater_md5 = upload_image.md5;
         socket.emit('picture:query', {md5: upload_image.md5});
         upload_image.pic = evt.srcElement.result;
-        //console.log(upload_image);
-
-        let img = document.createElement('img');
-        img.src = evt.srcElement.result;
-        img.style.maxHeight = '99%';
-        img.style.maxWidth = '99%';
     };
     reader.readAsDataURL(image);
     $$('change_avatar').value = "";
 });
 // Part 3: chat control
 const chats = new Map();  // username => [messages]
+const message_store = new MessageStore();
 const input = $$('input');
 const messages = $$('messages');  // 当前窗口的消息
-let receiver;                     // 当前窗口的发送对象
+//let receiver;                     // 当前窗口的发送对象
+let receiver = 'test2' ;      //测试用
+var messageBox = document.getElementById('messages');
+var timer = null;
 
-// FIXME: 需要改善
-function message2escape(content) {  // RAW to DB-format
-  // replace [emoji:..] with <img...
-  //let match;
-  let result = content;
-  /*let reg = /\[emoji:\d+\]/g;
-  while (match = reg.exec(content)) {
-    let emoji_index = match[0].slice(7, -1);
-    let emoji_amount = emojis.children.length;
-    if (emoji_index <= emoji_amount) {
-      result = result.replace(match[0], '<img class="emoji" src="data/emoji/' + emoji_index + '.gif" />');
+
+function FlashTitle(title,content){
+
+    var index = 0;
+    clearInterval(timer);
+    timer = setInterval(function () {
+        if (index % 2) {
+            $('title').text('【　　　】from '+title );//这里是中文全角空格，其他不行
+        } else {
+            $('title').text('【新消息】from '+title );
+        }
+        index++;
+
+        if (index > 20) {
+            clearInterval(timer);
+            document.title = "Lethe";
+        }
+    }, 500);
+    if (!document[hiddenProperty]) {
+        //document.title='被发现啦(*´∇｀*)';
+        //document.title="Lethe";
     }
-  }*/
-  return result;
+    else{
+    }
 }
-function message2html(content, sender) {  // DB-format to HTML
-  let message = document.createElement('article');
-  message.className = 'right';
-  message.innerHTML = '<div class="avatar">' +
-      '<img alt="' + sender + '" src=' + $$('user_avatar').src + ' />' + '</div>' +
-      '<div class="msg">' + ' <div class="tri"></div>' +
-      '<div class="msg_inner">' + content + '</div>' + ' </div>';
-  return message;
+
+function clearTitle(){
+    clearInterval(timer);
+    document.title="Lethe";
 }
+function newNotification(title, options) {
+    title = title || '新的消息'
+    options = options || {
+        body: '默认消息',
+        icon: 'https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1529265914393&di=d7674e59ceee8914874e00178d2160e4&imgtype=0&src=http%3A%2F%2Fpic.58pic.com%2F10%2F81%2F55%2F47bOOOPIC9f.jpg'
+    }
+    return new Notification(title, options);
+}
+
+
+
 
 socket.on('chat:message', (msg) => {
-  // 1.存入chats中
-  // 2.如果是当前目标，同时加入messages中
-  console.log('message received from ' + msg.sender + ' to ' + msg.receiver);
-  if (msg.receiver === receiver) {
-    let div = document.createElement('div');
-    div.innerHTML = message2html(msg.content, msg.sender);
-    messages.appendChild(div.firstChild); // FIXME: or use <p> ?
-  }
+
+    console.log(msg.message.content);
+    FlashTitle(msg.sender,msg.message.content);
+if(nowreceiver !=msg.sender)
+{
+
+    var a = {
+        body: msg.message.content,
+        icon: 'https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1529265914393&di=d7674e59ceee8914874e00178d2160e4&imgtype=0&src=http%3A%2F%2Fpic.58pic.com%2F10%2F81%2F55%2F47bOOOPIC9f.jpg'
+
+    }
+    if(document[hiddenProperty]){
+        newNotification(msg.sender+' send you a message!',a);
+    }
+
+
+    $$('friend_unreadTag_' + msg.sender).style.display = "block";
+    var num = $$('friend_unreadNum_' + msg.sender).innerHTML;
+    var numInt = parseInt(num) + 1;
+    $$('friend_unreadNum_' + msg.sender).innerHTML = numInt;
+}
+
+
+
+    if (message_store.Exist(msg.sender)) {
+        message_store.AppendMessage(msg.sender, msg.message);
+    }
+    if(receiver === msg.sender)
+        appendMessage(MessageDirector.GetInstance.createHTML(msg.message, avatar_store.get(msg.sender), authinfo.username));
+    messageBox.scrollTop = messageBox.scrollHeight;
 });
 
-socket.on('user:get_avatar', (res) => {
-  console.log(res);
-  let path = 'data/avatar/user.png';
-  if (res !== null){
-    path = url_base + res ;
-  }
+socket.on('groupchat:message', (msg) => {
+    if(msg.sender!=$$('user_username').innerText){
+        FlashTitle("新群聊消息",msg.content);
+    }
+if(nowreceivergroup!=msg.target && msg.sender!=$$('user_username').innerText) {
 
-  let img_user_avatar = $$('user_avatar');
-  img_user_avatar.src = path;
+    var a = {
+        body: "快去看看！",
+        icon: 'https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1529265914393&di=d7674e59ceee8914874e00178d2160e4&imgtype=0&src=http%3A%2F%2Fpic.58pic.com%2F10%2F81%2F55%2F47bOOOPIC9f.jpg'
+
+    }
+    if(document[hiddenProperty]) {
+        newNotification("新群聊消息！", a);
+    }
+
+    $$('group_unreadTag_' + msg.target).style.display = "block";
+    var num = $$('group_unreadNum_' + msg.target).innerHTML;
+    var numInt = parseInt(num) + 1;
+    $$('group_unreadNum_' + msg.target).innerHTML = numInt;
+}
+
+    if(msg.sender !== authinfo.username){
+        message_store.AppendMessage(msg.target, msg.message);
+        if(receiver === msg.target)
+            appendMessage(MessageDirector.GetInstance.createHTML(msg.message, avatar_store.get(msg.sender), authinfo.username));
+    }
+    messageBox.scrollTop = messageBox.scrollHeight;
+});
+
+/*
+socket.on('user:get_groups', (res)=>{
+    let groupinfo = res;
+    let path = 'data/avatar/group.png';
+    let onclick_group = function () {
+        $$('input').readOnly = false;
+        if (selected_receiver === this.id){
+            return;
+        }
+        if (selected_receiver !== null){
+            $$(selected_receiver).style.backgroundColor = "";
+        }
+        $$(this.id).style.backgroundColor = "#2626ff";
+        selected_receiver = this.id;
+        is_group_chat = true;
+        console.log(this.id + ' tag clicked');
+        let main = $$('main');
+        main.style.visibility = 'visible';
+        receiver = Number(this.id.replace('group_', ''));
+        console.log(user + ' chats with group' + receiver);
+        // 2. main: retrieve history
+        while (messages.firstChild) {
+            messages.removeChild(messages.firstChild);
+        }
+        let history = message_store.GetMessage(receiver);
+        //console.log(history);
+        for (let i = 0; i < history.length; ++i){
+            let tmpMessage = history[i];
+            let msg_html = MessageDirector.GetInstance.createHTML(tmpMessage, avatar_store.get(tmpMessage.sender), user);
+            messages.appendChild(msg_html);
+        }
+        messageBox.scrollTop = messageBox.scrollHeight;
+    };
+    let ul_groups = $$('friends');
+    let li_groups = document.createElement('li');
+    li_groups.id = 'group_' + groupinfo.groupid;
+    li_groups.style.height="60px";
+    li_groups.style.padding="10px";
+    li_groups.innerHTML =
+        '<button type="button" '+' id="delete_group_'+groupinfo.groupid+'" data-dismiss="modal" '+'class="close" '+'name='+ 'group_' +groupinfo.groupid +' style="float: left; width: 10%" > '+
+        ' <span aria-hidden="true" style="color: white">×</span>' +
+        '<span class="sr-only">Close</span>'+
+        '</button>'+
+        '<div class="avatar" style="float: left; margin-left: 1em; width: 25%">' +
+        '<img alt="avatar" id=' + 'group_' + groupinfo.groupid + '_avatar src= "/' + path + '"/>' +
+        '</div >' +
+        '<div class="main_li" style="width: 50%">' +
+        '<div class="username">' + '群组_' + groupinfo.groupid + '</div>';
+    li_groups.onclick = onclick_group;
+    message_store.StoreHistory(groupinfo.groupid, groupinfo.messages);
+    message_store.StoreHistory('group_members_' + groupinfo.groupid, groupinfo.members);
+    ul_groups.appendChild(li_groups);
+    $('#delete_group_'+groupinfo.groupid).click(
+        ()=>{
+            let confirm_res=confirm('你确定要退出该群聊吗？');
+            if (confirm_res){
+                let del_info={
+                    requestUserName: user,
+                    requestGroupId:groupinfo.groupid
+                };
+                socket.emit('group:del',del_info);
+            }
+        }
+    );
+});
+*/
+
+function addGroupsList(groupid) {
+    socket.emit('user:get_groups',{groupid: groupid}, (res)=>{
+        let groupinfo = res;
+        let path = 'data/avatar/group.png';
+        let onclick_group = function () {
+            $$('group_unreadTag_'+groupid).style.display = "none";
+            $$('group_unreadNum_'+groupid).innerHTML = '0';
+            nowreceiver = null;
+            nowreceivergroup = groupid;
+            $$('input').readOnly = false;
+            if (selected_receiver === this.id){
+                return;
+            }
+            if (selected_receiver !== null){
+                $$(selected_receiver).style.backgroundColor = "";
+            }
+            $$(this.id).style.backgroundColor = "#2626ff";
+            selected_receiver = this.id;
+            is_group_chat = true;
+            console.log(this.id + ' tag clicked');
+            let main = $$('main');
+            main.style.visibility = 'visible';
+            receiver = Number(this.id.replace('group_', ''));
+            console.log(user + ' chats with group' + receiver);
+            // 2. main: retrieve history
+            while (messages.firstChild) {
+                messages.removeChild(messages.firstChild);
+            }
+            let history = message_store.GetMessage(receiver);
+            //console.log(history);
+            for (let i = 0; i < history.length; ++i){
+                let tmpMessage = history[i];
+                let msg_html = MessageDirector.GetInstance.createHTML(tmpMessage, avatar_store.get(tmpMessage.sender), user);
+                messages.appendChild(msg_html);
+            }
+            messageBox.scrollTop = messageBox.scrollHeight;
+        };
+        let ul_groups = $$('friends');
+        let li_groups = document.createElement('li');
+        li_groups.id = 'group_' + groupinfo.groupid;
+        li_groups.style.height="60px";
+        li_groups.style.padding="10px";
+        li_groups.innerHTML =
+            '<button type="button" '+' id="delete_group_'+groupinfo.groupid+'" data-dismiss="modal" '+'class="close" '+'name='+ 'group_' +groupinfo.groupid +' style="float: left; width: 10%" > '+
+            ' <span aria-hidden="true" style="color: white">×</span>' +
+            '<span class="sr-only">Close</span>'+
+            '</button>'+
+            '<div class="avatar" style="float: left; margin-left: 1em; width: 25%">' +
+            '<img alt="avatar" id=' + 'group_' + groupinfo.groupid + '_avatar src= "/' + path + '"/>' +
+            '</div >' +
+            '<div class="main_li" style="width: 50%">' +
+            '<div class="username"><span>' + (groupinfo.groupname || ( "群组_"+groupinfo.groupid )) + '<div style="float:right;display: none"  id="group_unreadTag_'+  groupinfo.groupid +  '">'+'<span style="border-radius: 50%;    height: 20px;    width: 20px;    display: inline-block;    background: #FA676A;      vertical-align: top;">'+
+            '<span style="display: block;    color: #FFFFFF;    height: 20px;    line-height: 20px;    text-align: center" id="group_unreadNum_'+groupinfo.groupid+'">0</span>'+
+            '</span>'+'</div>'+ '</span><i style="float: right" class="material-icons" id="conf_' + groupinfo.groupid + '">build</i></div>'
+            ;
+        li_groups.onclick = onclick_group;
+        message_store.StoreHistory(groupinfo.groupid, groupinfo.messages);
+        message_store.StoreHistory('group_members_' + groupinfo.groupid, groupinfo.members);
+        ul_groups.appendChild(li_groups);
+        $('#delete_group_'+groupinfo.groupid).click(
+            ()=>{
+                let confirm_res=confirm('你确定要退出该群聊吗？');
+                if (confirm_res){
+                    let del_info={
+                        requestUserName: user,
+                        requestGroupId:groupinfo.groupid
+                    };
+                    socket.emit('group:del',del_info);
+                }
+            }
+        );
+        $('#conf_' + groupinfo.groupid).click(
+            ()=>{
+                group_config = groupinfo.groupid;
+                $('#conf-body').show();
+            }
+        );
+    });
+}
+
+function addFriendsList(name) {
+    let onclick_friend = function () {
+        nowreceivergroup = null;
+        nowreceiver =  name;
+        clearInterval(timer);
+        document.title="Lethe";
+        $$('input').readOnly = false;
+        $$('friend_unreadTag_'+friend_name).style.display = "none";
+        $$('friend_unreadNum_'+friend_name).innerHTML = '0';
+        if (selected_receiver === this.id){
+            return;
+        }
+        if (selected_receiver !== null){
+            $$(selected_receiver).style.backgroundColor = "";
+        }
+        $$(this.id).style.backgroundColor = "#2626ff";
+        selected_receiver = this.id;
+        is_group_chat = false;
+        console.log(this.id + ' tag clicked');
+        let main = $$('main');
+        main.style.visibility = 'visible';
+        receiver = this.id.replace('friend_', '');
+        console.log(user + ' chats with ' + receiver);
+
+        // 2. main: retrieve history
+        let sel = { sender: user, receiver: receiver };
+        if (message_store.Exist(receiver)) {
+            //已有聊天记录
+            while (messages.firstChild) {
+                messages.removeChild(messages.firstChild);
+            }
+            let history = message_store.GetMessage(receiver);
+            for (let i = 0; i < history.length; ++i){
+                let tmpMessage = history[i];
+                let msg_html = MessageDirector.GetInstance.createHTML(tmpMessage, avatar_store.get(tmpMessage.sender), user);
+                messages.appendChild(msg_html);
+            }
+            messageBox.scrollTop = messageBox.scrollHeight;
+        }
+        else{
+            socket.emit('chat:history', sel, (history) => {
+                while (messages.firstChild) {
+                    messages.removeChild(messages.firstChild);
+                }
+                if (history === null){
+                    message_store.StoreHistory(receiver,[]);
+                    return;
+                }
+                for (var i = 0; i < history.messages.length; ++i) {
+                    let tmpMessage = history.messages[i];
+                    let msg_html = MessageDirector.GetInstance.createHTML(tmpMessage, avatar_store.get(tmpMessage.sender), user);
+                    messages.appendChild(msg_html);
+                }
+                messageBox.scrollTop = messageBox.scrollHeight;
+                message_store.StoreHistory(receiver,history.messages);
+            });
+        }
+    };
+    let friend_name = name;
+    let path = 'data/avatar/user.png';
+    if(avatar_store.get(friend_name) !== 'default'){
+        path = url_base + image_base + avatar_store.get(friend_name);
+    }
+    let ul_friends = $$('friends');
+    let li_friend = document.createElement('li');
+    li_friend.id = 'friend_' + friend_name;
+    li_friend.style.height="60px";
+    li_friend.style.padding="10px";
+    li_friend.innerHTML =
+        '<button type="button" '+' id="delete_friend_'+friend_name+'" data-dismiss="modal" '+'class="close" '+'name='+friend_name+' style="float: left; width: 10%" > '+
+        ' <span aria-hidden="true" style="color: white">×</span>' +
+        '<span class="sr-only">Close</span>'+
+        '</button>'+
+        '<div class="avatar" style="float: left; margin-left: 1em; width: 25%">' +
+        '<img alt="avatar" id=' + friend_name + '_avatar src= "' + path + '"/>' +
+        '</div >' +
+        '<div class="main_li" style="width: 50%">' +
+        '<div class="username" style="float:left">' + friend_name + '</div>'+
+    '<div style="float:right;display: none"  id="friend_unreadTag_'+  friend_name +   '">'+'<span style="border-radius: 50%;    height: 20px;    width: 20px;    display: inline-block;    background: #FA676A;      vertical-align: top;">'+
+    '<span style="display: block;    color: #FFFFFF;    height: 20px;    line-height: 20px;    text-align: center" id="friend_unreadNum_'+friend_name+'">0</span>'+
+    '</span>'+'</div>';
+    li_friend.onclick = onclick_friend;
+    ul_friends.appendChild(li_friend);
+    $('#delete_friend_'+friend_name).click(
+        ()=>{
+            let confirm_res=confirm('你确定要删除该好友吗？');
+            if (confirm_res){
+                let del_info={
+                    requestUserName: user,
+                    requestFriendName:friend_name
+                };
+                socket.emit('chat:del',del_info);
+            }
+        }
+    );
+}
+
+// socket.on('user:get_avatar', (res) => {
+//   console.log(res);
+//   let path = 'data/avatar/user.png';
+//   if (res !== null){
+//     path = url_base + image_base + res ;
+//   }
+//   let img_user_avatar = $$('user_avatar');
+//   img_user_avatar.src = path;
+//   $$(authinfo.username+'_avatar').src = path;
+//   console.log($$(authinfo.username+'_avatar'));
+// });
+
+socket.on('get_all_info', (res)=>{
+    //console.log(res);
+    avatar_store.clear();
+    let tmpLen = res.length;
+    let userIndex;
+    for(let i = 0;i < tmpLen; i++){
+        if(res[i].avatar === undefined || res[i].avatar === null){
+            avatar_store.set(res[i].username, 'default');
+        }
+        else{
+            avatar_store.set(res[i].username, res[i].avatar);
+        }
+        if(res[i].username === authinfo.username)
+            userIndex = i;
+    }
+
+    let user = res[userIndex];
+    //console.log(user);
+
+    let path = 'data/avatar/user.png';
+    if (avatar_store.get(authinfo.username) !== 'default'){
+        path = url_base + image_base + user.avatar ;
+    }
+    let img_user_avatar = $$('user_avatar');
+    img_user_avatar.src = path;
+    $$(authinfo.username+'_avatar').src = path;
+
+    let div_user_username = $$('user_username');
+    div_user_username.textContent = user.username;
+
+    if(user.friends) for (let i = 0; i < user.friends.length; ++i) {
+        addFriendsList(user.friends[i]);
+    }
+    if(user.ingroup) for (let i = 0; i < user.ingroup.length; ++i){
+        addGroupsList(user.ingroup[i]);
+    }
 });
 
 $$('send').onclick = () => {
+  if (input.value.length === 0) return;
   console.log('message to sent to ' + receiver + ' from ' + user);
-
-  let msg_escape = message2escape(input.value);
-  let msg_html = message2html(input.value);
+  let msg_html = MessageDirector.GetInstance.createHTMLFromPlain(input.value);
+  //let msg_escape = message2escape(input.value);
+  //let msg_html = message2html(input.value);
   messages.appendChild(msg_html);
-  input.value = '';
+  messageBox.scrollTop = messageBox.scrollHeight;
 
-  socket.emit('chat:message', {
-    sender: user,
-    receiver: receiver,
-    formated: msg_escape
-  });
+  //let builder_msg = new TextMessageBuilder().createHTMLFromPlain(input.value);
+  //messages.appendChild(builder_msg);
+  let message = MessageDirector.GetInstance.createMessage(input.value, authinfo.username, receiver);
+  if(is_group_chat === false)
+      socket.emit('chat:message', message);
+  else
+      socket.emit('groupchat:message', message, message_store.GetMessage('group_members_' + receiver));
+  message_store.AppendMessage(receiver,message.message);
+  input.value = '';
 };
 
 // Part 3: picture-related control
@@ -226,13 +563,19 @@ socket.on('picture:query', (res) => {
     //图片已存在，发送消息
     console.log('image exists');
     if (change_avater){
-        socket.emit('user:avatar',{user: authinfo.username, md5: avater_md5});
+        socket.emit('user:avatar',{user: authinfo.username, md5: upload_image.md5, suffix: upload_image.suffix});
         change_avater = false;
         avater_md5 = null;
         return
     }
-    //TODO: 发送图片消息
-
+    //发送图片消息
+      let imagemessage = '[img:' + upload_image.md5 + '.' + upload_image.suffix + ']';
+      let imagehtml = MessageDirector.GetInstance.createHTMLFromPlain(imagemessage);
+      appendMessage(imagehtml);
+      messageBox.scrollTop = messageBox.scrollHeight;
+      let message = MessageDirector.GetInstance.createMessage(imagemessage,authinfo.username,receiver);
+      socket.emit('chat:message', message);
+      message_store.AppendMessage(receiver, message.message);
     upload_image = {};
   }
   else {
@@ -246,9 +589,20 @@ socket.on('picture:upload', (res) => {
   if (res){
     //上传成功，发送消息
     console.log('upload success');
-
-    //TODO: 发送图片消息
-
+  if (change_avater){
+      socket.emit('user:avatar',{user: authinfo.username, md5: upload_image.md5, suffix: upload_image.suffix});
+      change_avater = false;
+      avater_md5 = null;
+      return
+  }
+    //发送图片消息
+    let imagemessage = '[img:' + upload_image.md5 + '.' + upload_image.suffix + ']';
+    let imagehtml = MessageDirector.GetInstance.createHTMLFromPlain(imagemessage);
+    appendMessage(imagehtml);
+    messageBox.scrollTop = messageBox.scrollHeight;
+    let message = MessageDirector.GetInstance.createMessage(imagemessage,authinfo.username,receiver);
+    socket.emit('chat:message', message);
+    message_store.AppendMessage(receiver, message.message);
     upload_image = {};
   }
   else {
@@ -256,11 +610,16 @@ socket.on('picture:upload', (res) => {
     console.log('upload fail');
     upload_image = {};
   }
-  if (change_avater){
-    socket.emit('user:avatar',{user: authinfo.username, md5: avater_md5});
-    change_avater = false;
-    avater_md5 = null;
-  }
+});
+
+socket.on('user:avatar', (res) => {
+    if (res){
+        avatar_store.set(authinfo.username, upload_image.md5 + '.' + upload_image.suffix);
+        $$('user_avatar').src = url_base + image_base + avatar_store.get(authinfo.username);
+    }
+    else {
+        alert('修改头像错误，请稍后再试');
+    }
 });
 
 $$('open_file').addEventListener('change', function () {
@@ -270,7 +629,7 @@ $$('open_file').addEventListener('change', function () {
     alert('this is not a image file.');
     return;
   }
-  console.log(image);
+  //console.log(image);
   upload_image.suffix = image.name.toLowerCase().split('.').splice(-1)[0];
   let reader = new FileReader();
   if (!reader) {
@@ -284,23 +643,6 @@ $$('open_file').addEventListener('change', function () {
     socket.emit('picture:query', {md5: upload_image.md5});
     upload_image.pic = evt.srcElement.result;
     //console.log(upload_image);
-
-    let img = document.createElement('img');
-    img.src = evt.srcElement.result;
-    img.style.maxHeight = '99%';
-    img.style.maxWidth = '99%';
-    /*
-    let message = new message(user, receiver, img.outerHTML);
-    let formated = message.get_formated_message();
-    messages.appendChild(formated);
-    */
-    /*
-    socket.emit('chat:message', {
-      sender: message.sender,
-      receiver: message.receiver,
-      formated: formated.outerHTML
-    });
-    */
   };
   reader.readAsDataURL(image);
   $$('open_file').value = "";
@@ -310,7 +652,6 @@ $$('select_image').onclick = () => {
 };
 
 
-/*
 socket.on('emoji:list', (data) => {
   for(let i = 1 ; i <= data.length; ++i) {
     let emoji_item = document.createElement('img');
@@ -322,17 +663,182 @@ socket.on('emoji:list', (data) => {
     emojis.appendChild(emoji_item);
   }
 });
-*/
-// Finally: main start
-/* init emoji */
-//socket.emit('emoji:list');
-/* auto login */
-authinfo = store.get('authinfo'); // 用户登陆信息 { username: str, password: str }
-user = authinfo ? authinfo.username : null; // 暂存用户名
-if(authinfo) {
-  console.log('[Init] try auto login');
-  socket.emit('user:login', authinfo);
+
+
+// part 4: friends and groups controll
+//add
+$$('add-btn').onclick = () =>{
+    $('#add-body').show();
+    $('#add-bg').show();
+    $('#add-friend-name').attr("autofocus", "autofocus");
+};
+
+$$('add-close').onclick = ()=>{
+    $('#add-body').hide();
+    $('#add-bg').hide();
+    //清空保存的好友名和提示信息
+    $('#add-friend-name').val('');
+    $('#add-friend-msg').empty();
+    $('#add-friend-msg').hide();
+    //清空保留的群聊名
+    $('#add-group-name').val('');
+
+};
+
+$$('add-friend').onclick=()=>{
+    $('#add-friend-name').attr("autofocus", "autofocus");
+    $('#add-friend-body').show();
+    $('#add-group-body').hide();
+};
+
+$$('add-group').onclick=()=>{
+    $('#add-group-name').attr("autofocus", "autofocus");
+    $('#add-friend-body').hide();
+    $('#add-group-body').show();
+};
+
+$$('add-friend-btn').onclick =()=>{
+    // console.log($('#add-friend-name').val().length);
+    if ($('#add-friend-name').val().length===0){     //输入的添加好友的账号为空
+        $('#add-friend-msg').html('添加好友账号不能为空！');
+        $('#add-friend-msg').show();
+    }
+    else {
+        $('#add-friend-msg').empty();
+        var data={
+            requestUserName: user,
+            requestFriendName:$('#add-friend-name').val()
+        };
+        $('#add-friend-msg').hide();
+        socket.emit('chat:add',data);
+        // window.location.reload(true);
+    }
+};
+
+
+$$('rename-group-btn').onclick = () => {
+    if ($('#rename-group-name').val().length===0){     //输入为空
+        $.alert("裙名不能为空！");
+    }
+    let data = {
+        chat_id : group_config,
+        name: $('#rename-group-name').val()
+    };
+    socket.emit('groupchat:rename',data);
+    $('li#group_' + group_config + ' div.username span').html($('#rename-group-name').val());
+    $('#conf-body').hide();
+    $('#add-bg').hide();
+    $('#rename-group-name').val('');
+};
+
+$$('conf-close').onclick = ()=>{
+    $('#conf-body').hide();
+    $('#add-bg').hide();
+    $('#rename-group-name').val('');
+};
+
+socket.on('chat:add', (res) => {        //处理返回结果
+        if (res === null) {
+            alert("该账号不存在！");
+        }
+        else if (res === 'exist') {
+            alert("已是好友！");
+        }
+        else if (res === 'success') {
+            alert("添加成功");
+            addFriendsList($('#add-friend-name').val());
+        }
+        else {
+            alert("其它错误！");
+        }
+    }
+);
+
+socket.on('chat:del',(res)=>{
+    if (res){
+        alert('删除成功');
+        window.location.reload(true);
+    }
+});
+
+//group controll
+
+//创建群聊
+$$('create-group-btn').onclick=()=>{
+    socket.emit('group:create',user);
 }
+
+socket.on('group:crate',(res)=>{
+    if (res){
+        window.location.reload(true);
+        alert('创建群聊成功！');
+    }
+});
+
+//加入群聊
+$$('add-group-btn').onclick=()=>{
+    if ($('#add-group-name').val().length===0){             //群聊账号不能为空
+        $('#add-group-msg').html('添加的群聊账号不能为空！');
+        $('#add-group-msg').show();
+    }
+    else {
+        $('#add-group-msg').empty();
+        var data={
+            requestUserName: user,
+            requestGroupId: Number($('#add-group-name').val())
+        };
+        if (isNaN(data.requestGroupId)){
+            $('#add-group-msg').html('输入的账号应为数字！');
+            $('#add-group-msg').show();
+            return;
+        }
+        $('#add-group-msg').hide();
+        socket.emit('group:add',data);
+    }
+}
+
+socket.on('group:add', (res) => {
+    if (res===null){
+        alert('该群聊不存在！');
+    }
+    else if (res==='success'){
+        alert("添加成功");
+        addGroupsList(Number($('#add-group-name').val()));
+    }
+    else {
+        alert("其它错误！");
+    }
+});
+
+socket.on('group:del',(res)=>{
+   if (res){
+       window.location.reload(true);
+       alert('成功退出群聊！');
+   }
+});
+
+//更新群员缓存
+socket.on('renew:members',(username, GID, type)=>{
+    let GroupMembersID = 'group_members_' + GID;
+    if(type === 'add'){
+        message_store.AppendMembers(GroupMembersID, username);
+    }
+    else if(type === 'delete'){
+        message_store.DeleteMembers(GroupMembersID, username);
+    }
+});
+
+// Finally: main start
+/* auto login */
+
+//TODO: 为了测试把自动登录关掉了
+// authinfo = store.get('authinfo'); // 用户登陆信息 { username: str, password: str }
+// user = authinfo ? authinfo.username : null; // 暂存用户名
+// if(authinfo) {
+//   console.log('[Init] try auto login');
+//   socket.emit('user:login', authinfo);
+// }
+
 /* ok, now show HTML body*/
 $$('body').style.visibility = 'visible';
 
@@ -470,7 +976,7 @@ $(document).ready(function () {
             container:'body'
         }
     )
-})
+});
 
 // $$('select_emoji').addEventListener('click', (evt) => {
 //     //emojis.style.display = 'block';
@@ -494,3 +1000,11 @@ document.body.addEventListener('click', function (event)
         $('#select_emoji').popover('hide');
     }
 });
+window.onload = function () {
+    if(window.Notification){
+        if(Notification.permission === 'granted'){
+        }else{
+            Notification.requestPermission();
+        }
+    }
+}

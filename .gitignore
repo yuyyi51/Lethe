@@ -123,3 +123,6 @@ fabric.properties
 .idea/httpRequests
 
 /images/
+/doc/bootstrap.min.css
+/www/data/images/
+.DS_Store
