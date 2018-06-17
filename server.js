@@ -77,11 +77,17 @@ io.on('connection', (socket) => {
     });
   });
 
+  socket.on('get_all_info', ()=>{
+      db.get_user_to_avatar((res)=>{
+          socket.emit('get_all_info', res);
+      });
+  });
+
   // desc:  更换头像
   // on:    { user: str, md5: str }
   // emit:  { avatar: url }
   socket.on('user:avatar', (data) => {
-    db.change_avatar(data.user, data.md5, (res) => {
+    db.change_avatar(data.user, data.md5, data.suffix, (res) => {
       socket.emit('user:avatar', res);
     });
   });
@@ -95,10 +101,10 @@ io.on('connection', (socket) => {
     });
   });
 
-  socket.on('user:get_friends_avatar', (data) => {
+  socket.on('user:get_friends', (data) => {
       // console.log(data);
       db.get_avatar(data.user, (res) => {
-          socket.emit('user:get_friends_avatar',data.user, res);
+          socket.emit('user:get_friends',data.user, res);
       });
   });
 

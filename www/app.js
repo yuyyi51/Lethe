@@ -9,6 +9,7 @@ let upload_image = {};
 let change_avater = false;
 let avater_md5 = null;
 let is_group_chat = false;
+let avatar_store = new Map();
 
 function appendMessage(html) {
     $$('messages').appendChild(html);
@@ -75,19 +76,20 @@ socket.on('user:login', (res) => {
     $$('user_avatar').appendChild(imgtest2);
     //////////////////////////////////////*/
   $$('user_avatar').appendChild(img);
-  socket.emit('user:get_avatar',{user: authinfo.username});
-  socket.emit('user:get_userinfo', authinfo, (userinfo) => {
-    let user = userinfo;
-    console.log(user);
-    let div_user_username = $$('user_username');
-    div_user_username.textContent = user.username;
-    if(user.friends) for (let i = 0; i < user.friends.length; ++i) {
-      socket.emit('user:get_friends_avatar',{user: user.friends[i]});
-    }
-    if(user.ingroup) for (let i = 0; i < user.ingroup.length; ++i){
-        socket.emit('user:get_groups',{groupid: user.ingroup[i]});
-    }
-  });
+  socket.emit('get_all_info');
+  // socket.emit('user:get_avatar',{user: authinfo.username});
+  // socket.emit('user:get_userinfo', authinfo, (userinfo) => {
+  //   let user = userinfo;
+  //   console.log(user);
+  //   let div_user_username = $$('user_username');
+  //   div_user_username.textContent = user.username;
+  //   if(user.friends) for (let i = 0; i < user.friends.length; ++i) {
+  //     socket.emit('user:get_friends',{user: user.friends[i]});
+  //   }
+  //   if(user.ingroup) for (let i = 0; i < user.ingroup.length; ++i){
+  //       socket.emit('user:get_groups',{groupid: user.ingroup[i]});
+  //   }
+  // });
 });
 
 $$('log_out').onclick = () => {  // as logout btn
@@ -136,7 +138,7 @@ socket.on('chat:message', (msg) => {
         message_store.AppendMessage(msg.sender, msg.message);
     }
     if(receiver === msg.sender)
-        appendMessage(MessageDirector.GetInstance.createHTML(msg.message, authinfo.username));
+        appendMessage(MessageDirector.GetInstance.createHTML(msg.message, avatar_store.get(authinfo.username), authinfo.username));
     messageBox.scrollTop = messageBox.scrollHeight;
 });
 
@@ -145,7 +147,7 @@ socket.on('groupchat:message', (msg) => {
         message_store.AppendMessage(msg.target, msg.message);
     }
     if(receiver === msg.target && msg.sender !== authinfo.username)
-        appendMessage(MessageDirector.GetInstance.createHTML(msg.message, authinfo.username));
+        appendMessage(MessageDirector.GetInstance.createHTML(msg.message, avatar_store.get(authinfo.username), authinfo.username));
     messageBox.scrollTop = messageBox.scrollHeight;
 });
 
@@ -164,10 +166,10 @@ socket.on('user:get_groups', (res)=>{
             messages.removeChild(messages.firstChild);
         }
         let history = message_store.GetMessage(receiver);
-        console.log(history);
+        //console.log(history);
         for (let i = 0; i < history.length; ++i){
             let tmpMessage = history[i];
-            let msg_html = MessageDirector.GetInstance.createHTML(tmpMessage, user);
+            let msg_html = MessageDirector.GetInstance.createHTML(tmpMessage, avatar_store.get(user), user);
             messages.appendChild(msg_html);
         }
         messageBox.scrollTop = messageBox.scrollHeight;
@@ -205,7 +207,7 @@ socket.on('user:get_groups', (res)=>{
     ul_groups.appendChild(li_groups);
 });
 
-socket.on('user:get_friends_avatar', (data,res) => {
+socket.on('user:get_friends', (data,res) => {
     let path = 'data/avatar/user.png';
     if (res !== null){
         path = url_base + image_base + res ;
@@ -228,7 +230,7 @@ socket.on('user:get_friends_avatar', (data,res) => {
             let history = message_store.GetMessage(receiver);
             for (let i = 0; i < history.length; ++i){
                 let tmpMessage = history[i];
-                let msg_html = MessageDirector.GetInstance.createHTML(tmpMessage, user);
+                let msg_html = MessageDirector.GetInstance.createHTML(tmpMessage, avatar_store.get(user), user);
                 messages.appendChild(msg_html);
             }
             messageBox.scrollTop = messageBox.scrollHeight;
@@ -244,7 +246,7 @@ socket.on('user:get_friends_avatar', (data,res) => {
                 }
                 for (var i = 0; i < history.messages.length; ++i) {
                     let tmpMessage = history.messages[i];
-                    let msg_html = MessageDirector.GetInstance.createHTML(tmpMessage, user);
+                    let msg_html = MessageDirector.GetInstance.createHTML(tmpMessage, avatar_store.get(user), user);
                     messages.appendChild(msg_html);
                 }
                 messageBox.scrollTop = messageBox.scrollHeight;
@@ -285,16 +287,54 @@ socket.on('user:get_friends_avatar', (data,res) => {
 
 });
 
-socket.on('user:get_avatar', (res) => {
-  console.log(res);
-  let path = 'data/avatar/user.png';
-  if (res !== null){
-    path = url_base + image_base + res ;
-  }
-  let img_user_avatar = $$('user_avatar');
-  img_user_avatar.src = path;
-  $$(authinfo.username+'_avatar').src = path;
-  console.log($$(authinfo.username+'_avatar'));
+// socket.on('user:get_avatar', (res) => {
+//   console.log(res);
+//   let path = 'data/avatar/user.png';
+//   if (res !== null){
+//     path = url_base + image_base + res ;
+//   }
+//   let img_user_avatar = $$('user_avatar');
+//   img_user_avatar.src = path;
+//   $$(authinfo.username+'_avatar').src = path;
+//   console.log($$(authinfo.username+'_avatar'));
+// });
+
+socket.on('get_all_info', (res)=>{
+    //console.log(res);
+    avatar_store.clear();
+    let tmpLen = res.length;
+    let userIndex;
+    for(let i = 0;i < tmpLen; i++){
+        if(res[i].avatar === undefined || res[i].avatar === null){
+            avatar_store.set(res[i].username, 'default');
+        }
+        else{
+            avatar_store.set(res[i].username, res[i].avatar);
+        }
+        if(res[i].username === authinfo.username)
+            userIndex = i;
+    }
+
+    let user = res[userIndex];
+    //console.log(user);
+
+    let path = 'data/avatar/user.png';
+    if (avatar_store.get(authinfo.username) !== 'default'){
+        path = url_base + image_base + user.avatar ;
+    }
+    let img_user_avatar = $$('user_avatar');
+    img_user_avatar.src = path;
+    $$(authinfo.username+'_avatar').src = path;
+
+    let div_user_username = $$('user_username');
+    div_user_username.textContent = user.username;
+
+    if(user.friends) for (let i = 0; i < user.friends.length; ++i) {
+        socket.emit('user:get_friends',{user: user.friends[i]});
+    }
+    if(user.ingroup) for (let i = 0; i < user.ingroup.length; ++i){
+        socket.emit('user:get_groups',{groupid: user.ingroup[i]});
+    }
 });
 
 $$('send').onclick = () => {
@@ -322,7 +362,7 @@ socket.on('picture:query', (res) => {
     //图片已存在，发送消息
     console.log('image exists');
     if (change_avater){
-        socket.emit('user:avatar',{user: authinfo.username, md5: avater_md5});
+        socket.emit('user:avatar',{user: authinfo.username, imageInfo: upload_image.md5 + '.' + upload_image.suffix});
         change_avater = false;
         avater_md5 = null;
         return
@@ -349,7 +389,7 @@ socket.on('picture:upload', (res) => {
     //上传成功，发送消息
     console.log('upload success');
   if (change_avater){
-      socket.emit('user:avatar',{user: authinfo.username, md5: avater_md5});
+      socket.emit('user:avatar',{user: authinfo.username, md5: upload_image.md5, suffix: upload_image.suffix});
       change_avater = false;
       avater_md5 = null;
       return
@@ -373,7 +413,8 @@ socket.on('picture:upload', (res) => {
 
 socket.on('user:avatar', (res) => {
     if (res){
-        socket.emit('user:get_avatar', {user: authinfo.username});
+        avatar_store.set(authinfo.username, upload_image.md5 + '.' + upload_image.suffix);
+        $$('user_avatar').src = url_base + image_base + avatar_store.get(authinfo.username);
     }
     else {
         alert('修改头像错误，请稍后再试');

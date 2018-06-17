@@ -43,15 +43,22 @@ TextMessageBuilder.prototype.createMessage = function (plain_message, sender, ta
     return data;
 };
 
-TextMessageBuilder.prototype.createHTML = function (message, selfname) {
+TextMessageBuilder.prototype.createHTML = function (message, avatarsrc, selfname) {
     let content = message.content;
     let sender = message.sender;
-    console.log(message);
+    if(avatarsrc === 'default')
+    {
+        avatarsrc = 'data/avatar/group.png';
+    }
+    else{
+        avatarsrc = url_base + image_base + avatarsrc;
+    }
+    //console.log(message);
     let html = document.createElement('article');
     if (selfname === sender)
         html.className = 'right';
     html.innerHTML = '<div class="avatar">' +
-        '<img alt="' + sender + '" src=' + $$(sender+'_avatar').src + ' />' + '</div>' +
+        '<img alt="' + sender + '" src=' + avatarsrc + ' />' + '</div>' +
         '<div class="msg">' + ' <div class="tri"></div>' +
         '<div class="msg_inner">' + content + '</div>' + ' </div>';
     return html;
@@ -85,14 +92,21 @@ ImageMessageBuilder.prototype.createMessage = function(plain_message, sender, ta
     return data;
 };
 
-ImageMessageBuilder.prototype.createHTML = function (message, selfname) {
+ImageMessageBuilder.prototype.createHTML = function (message, avatarsrc, selfname) {
     let image_url = message.content.match(/\[img:(\S*)\]/)[1];
     let sender = message.sender;
+    if(avatarsrc === 'default')
+    {
+        avatarsrc = 'data/avatar/group.png';
+    }
+    else{
+        avatarsrc = url_base + image_base + avatarsrc;
+    }
     let html = document.createElement('article');
     if (selfname === sender)
         html.className = 'right';
     html.innerHTML = '<div class="avatar">' +
-        '<img alt="user" src=' + $$(sender+'_avatar').src + ' />' + '</div>' +
+        '<img alt="user" src=' + avatarsrc + ' />' + '</div>' +
         '<div class="msg">' + ' <div class="tri"></div>' +
         '<div class="msg_inner">' + '<img style="max-width: 600px" src=' + url_base + image_base + image_url + ' />' + '</div>' + ' </div>';
     return html;
@@ -124,13 +138,13 @@ MessageDirector.prototype.createMessage = function (content, sender, target) {
     }
 };
 
-MessageDirector.prototype.createHTML = function (message, self) {
+MessageDirector.prototype.createHTML = function (message, avatarsrc, self) {
     if (message.content.match(/\[img:(\S*)\]/) !== null) {
         //image
-        return this.imageBuilder.createHTML(message, self);
+        return this.imageBuilder.createHTML(message, avatarsrc, self);
     }
     else{
-        return this.textBuilder.createHTML(message, self);
+        return this.textBuilder.createHTML(message, avatarsrc, self);
     }
 };
 
