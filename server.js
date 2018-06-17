@@ -165,11 +165,20 @@ io.on('connection', (socket) => {
 
     //desc: 加入群聊
     //on：{requestUserName: str ,requestGroupId: int}
-    //emit:  result
+    //emit: result
     socket.on('group:add', (data) => {
         db.join_group(data.requestUserName, data.requestGroupId, (res) => {
             socket.emit('group:add', res);
         });
+    });
+
+    //desc: 退出群聊
+    //on: {requestUserName: str ,requestGroupId: int}
+    //emit: bool
+    socket.on('group:del',(data)=>{
+        db.exit_group(data.requestUserName,data.requestGroupId,(res)=>{
+            socket.emit('group:del',res);
+        })
     });
 
   // desc:  获取某个会话的历史记录

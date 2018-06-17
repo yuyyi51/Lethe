@@ -190,21 +190,21 @@ socket.on('user:get_groups', (res)=>{
         '<div class="main_li" style="width: 50%">' +
         '<div class="username">' + '群组_' + groupinfo.groupid + '</div>';
     li_groups.onclick = onclick_group;
-    $('#delete_group_'+groupinfo.groupid).click(
-        ()=>{
-            let confirm_res=confirm('你确定要退出吗？');
-            if (confirm_res){
-                // let del_info={
-                //     requestUserName: user,
-                //     requestFriendName:friend_name
-                // };
-                // socket.emit('chat:del',del_info);
-            }
-        }
-    );
     message_store.StoreHistory(groupinfo.groupid, groupinfo.messages);
     message_store.StoreHistory('group_members_' + groupinfo.groupid, groupinfo.members);
     ul_groups.appendChild(li_groups);
+    $('#delete_group_'+groupinfo.groupid).click(
+        ()=>{
+            let confirm_res=confirm('你确定要退出该群聊吗？');
+            if (confirm_res){
+                let del_info={
+                    requestUserName: user,
+                    requestGroupId:groupinfo.groupid
+                };
+                socket.emit('group:del',del_info);
+            }
+        }
+    );
 });
 
 socket.on('user:get_friends', (data,res) => {
@@ -585,6 +585,13 @@ socket.on('group:add', (res) => {
     else {
         alert("其它错误！");
     }
+});
+
+socket.on('group:del',(res)=>{
+   if (res){
+       window.location.reload(true);
+       alert('成功退出群聊！');
+   }
 });
 
 // Finally: main start
