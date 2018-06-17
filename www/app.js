@@ -72,7 +72,7 @@ socket.on('user:login', (res) => {
   socket.emit('user:get_avatar',{user: authinfo.username});
   socket.emit('user:get_userinfo', authinfo, (userinfo) => {
     let user = userinfo;
-    console.log(user);
+    //console.log(user);
     let div_user_username = $$('user_username');
     div_user_username.textContent = user.username;
     if(user.friends) for (let i = 0; i < user.friends.length; ++i) {
@@ -167,7 +167,7 @@ socket.on('user:get_groups', (res)=>{
             messages.removeChild(messages.firstChild);
         }
         let history = message_store.GetMessage(receiver);
-        console.log(history);
+        //console.log(history);
         for (let i = 0; i < history.length; ++i){
             let tmpMessage = history[i];
             let msg_html = MessageDirector.GetInstance.createHTML(tmpMessage, user);
@@ -298,7 +298,7 @@ socket.on('user:get_friends_avatar', (data,res) => {
 });
 
 socket.on('user:get_avatar', (res) => {
-  console.log(res);
+  //console.log(res);
   let path = 'data/avatar/user.png';
   if (res !== null){
     path = url_base + image_base + res ;
@@ -306,7 +306,7 @@ socket.on('user:get_avatar', (res) => {
   let img_user_avatar = $$('user_avatar');
   img_user_avatar.src = path;
   $$(authinfo.username+'_avatar').src = path;
-  console.log($$(authinfo.username+'_avatar'));
+  //console.log($$(authinfo.username+'_avatar'));
 });
 
 $$('send').onclick = () => {
@@ -400,7 +400,7 @@ $$('open_file').addEventListener('change', function () {
     alert('this is not a image file.');
     return;
   }
-  console.log(image);
+  //console.log(image);
   upload_image.suffix = image.name.toLowerCase().split('.').splice(-1)[0];
   let reader = new FileReader();
   if (!reader) {
