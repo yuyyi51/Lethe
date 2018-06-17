@@ -242,6 +242,15 @@ io.on('connection', (socket) => {
       mediator.SendMessageToGroup(members, message);
   });
 
+  //********Group Management*********//
+
+    // desc:  调整群聊名称
+    // on:    { chat_id: str, name: str }
+
+  socket.on('groupchat:rename', (data) => {
+      console.log("Rename: " + data);
+      db.rename_group(data.chat_id, data.name)
+  });
 
   /**********************/
   /* Part 3 : Resources */

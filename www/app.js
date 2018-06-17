@@ -11,6 +11,7 @@ let avater_md5 = null;
 let is_group_chat = false;
 let avatar_store = new Map();
 let selected_receiver = null;
+let group_config = null;
 
 function appendMessage(html) {
     $$('messages').appendChild(html);
@@ -271,7 +272,7 @@ function addGroupsList(groupid) {
             '<img alt="avatar" id=' + 'group_' + groupinfo.groupid + '_avatar src= "/' + path + '"/>' +
             '</div >' +
             '<div class="main_li" style="width: 50%">' +
-            '<div class="username">' + '群组_' + groupinfo.groupid + '</div>';
+            '<div class="username">' + groupinfo.groupname + '<i style="float: right" class="material-icons" id="conf_' + groupinfo.groupid + '">build</i></div>';
         li_groups.onclick = onclick_group;
         message_store.StoreHistory(groupinfo.groupid, groupinfo.messages);
         message_store.StoreHistory('group_members_' + groupinfo.groupid, groupinfo.members);
@@ -286,6 +287,12 @@ function addGroupsList(groupid) {
                     };
                     socket.emit('group:del',del_info);
                 }
+            }
+        );
+        $('#conf_' + groupinfo.groupid).click(
+            ()=>{
+                group_config = groupinfo.groupid;
+                $('#conf-body').show();
             }
         );
     });
@@ -563,7 +570,7 @@ $$('add-btn').onclick = () =>{
     $('#add-body').show();
     $('#add-bg').show();
     $('#add-friend-name').attr("autofocus", "autofocus");
-}
+};
 
 $$('add-close').onclick = ()=>{
     $('#add-body').hide();
@@ -575,19 +582,19 @@ $$('add-close').onclick = ()=>{
     //清空保留的群聊名
     $('#add-group-name').val('');
 
-}
+};
 
 $$('add-friend').onclick=()=>{
     $('#add-friend-name').attr("autofocus", "autofocus");
     $('#add-friend-body').show();
     $('#add-group-body').hide();
-}
+};
 
 $$('add-group').onclick=()=>{
     $('#add-group-name').attr("autofocus", "autofocus");
     $('#add-friend-body').hide();
     $('#add-group-body').show();
-}
+};
 
 $$('add-friend-btn').onclick =()=>{
     // console.log($('#add-friend-name').val().length);
@@ -605,7 +612,29 @@ $$('add-friend-btn').onclick =()=>{
         socket.emit('chat:add',data);
         // window.location.reload(true);
     }
-}
+};
+
+
+$$('rename-group-btn').onclick = () => {
+    if ($('#rename-group-name').val().length===0){     //输入为空
+        $.alert("裙名不能为空！");
+    }
+    let data = {
+        chat_id : group_config,
+        name: $('#rename-group-name').val()
+    };
+    socket.emit('groupchat:rename',data);
+    $('li#group_' + group_config + ' .username').html($('#rename-group-name').val());
+    $('#conf-body').hide();
+    $('#add-bg').hide();
+    $('#rename-group-name').val('');
+};
+
+$$('conf-close').onclick = ()=>{
+    $('#conf-body').hide();
+    $('#add-bg').hide();
+    $('#rename-group-name').val('');
+};
 
 socket.on('chat:add', (res) => {        //处理返回结果
         if (res === null) {
@@ -702,12 +731,12 @@ socket.on('renew:members',(username, GID, type)=>{
 /* auto login */
 
 //TODO: 为了测试把自动登录关掉了
-authinfo = store.get('authinfo'); // 用户登陆信息 { username: str, password: str }
-user = authinfo ? authinfo.username : null; // 暂存用户名
-if(authinfo) {
-  console.log('[Init] try auto login');
-  socket.emit('user:login', authinfo);
-}
+// authinfo = store.get('authinfo'); // 用户登陆信息 { username: str, password: str }
+// user = authinfo ? authinfo.username : null; // 暂存用户名
+// if(authinfo) {
+//   console.log('[Init] try auto login');
+//   socket.emit('user:login', authinfo);
+// }
 
 /* ok, now show HTML body*/
 $$('body').style.visibility = 'visible';
