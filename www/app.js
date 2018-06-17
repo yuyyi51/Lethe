@@ -149,6 +149,7 @@ socket.on('groupchat:message', (msg) => {
     messageBox.scrollTop = messageBox.scrollHeight;
 });
 
+/*
 socket.on('user:get_groups', (res)=>{
     let groupinfo = res;
     let path = 'data/avatar/group.png';
@@ -213,6 +214,7 @@ socket.on('user:get_groups', (res)=>{
         }
     );
 });
+*/
 
 function addGroupsList(groupid) {
     socket.emit('user:get_groups',{groupid: groupid}, (res)=>{
