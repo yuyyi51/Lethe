@@ -83,7 +83,13 @@
     </div>
     <div id="conf-body">
         <div class="modal-header" style="background-color: #343E48; height: fit-content">
-            群管理
+            <button type="button" id="conf-name" class="btn">
+                <a class="material-icons" href="javascript:" style="color: #ffffff; text-decoration: none;position: center" >add_comment</a>
+            </button>
+            <!--群聊-->
+            <button type="button" id="conf-user" class="btn">
+                <a class="material-icons" href="javascript:" style="color: #ffffff; text-decoration: none;position: center" >person_add</a>
+            </button>
             <button type="button" id="conf-close" class="close" data-dismiss="modal">
                 <span aria-hidden="true" style="color: white">×</span>
                 <span class="sr-only">Close</span>
@@ -98,6 +104,17 @@
                 </form>
                 <div class="marginB10">
                     <button id="rename-group-btn" type="button" class="btn btn-block btn-primary">重命名</button>
+                </div>
+            </section>
+            <section class="v5-input-txt" id="conf-user-body" style="display: none">
+                <form id="conf-user-form"  autocomplete="off">
+                    <li class="form-group">
+                        <input class="form-control" id="conf-user-name" maxlength="50"  placeholder="输入用户名称..." type="text">
+                    </li>
+                </form>
+                <div class="marginB10">
+                    <button id="add-user-btn" type="button" class="btn btn-block btn-primary">添加成员</button>
+                    <button id="del-user-btn" type="button" class="btn btn-block btn-primary">删除成员</button>
                 </div>
             </section>
         </div>

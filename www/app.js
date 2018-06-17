@@ -731,6 +731,46 @@ $$('rename-group-btn').onclick = () => {
     $('#rename-group-name').val('');
 };
 
+$$('add-user-btn').onclick = () => {
+    if ($('#conf-user-name').val().length===0){     //输入为空
+        $.alert("不能为空！");
+    }
+    let data = {
+        chat_id : group_config,
+        name: $('#conf-user-name').val()
+    };
+    socket.emit('groupchat:add',data);
+    $('#conf-body').hide();
+    $('#add-bg').hide();
+    $('#conf-user-name').val('');
+};
+
+$$('del-user-btn').onclick = () => {
+    if ($('#conf-user-name').val().length===0){     //输入为空
+        $.alert("不能为空！");
+    }
+    let data = {
+        chat_id : group_config,
+        name: $('#conf-user-name').val()
+    };
+    socket.emit('groupchat:kick',data);
+    $('#conf-body').hide();
+    $('#add-bg').hide();
+    $('#conf-user-name').val('');
+};
+
+$$('conf-name').onclick=()=>{
+    $('#rename-group-body').attr("autofocus", "autofocus");
+    $('#rename-group-body').show();
+    $('#conf-user-body').hide();
+};
+
+$$('conf-user').onclick=()=>{
+    $('#conf-user-body').attr("autofocus", "autofocus");
+    $('#rename-group-body').hide();
+    $('#conf-user-body').show();
+};
+
 $$('conf-close').onclick = ()=>{
     $('#conf-body').hide();
     $('#add-bg').hide();
