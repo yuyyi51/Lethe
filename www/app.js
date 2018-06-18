@@ -27,12 +27,6 @@ var hiddenProperty = 'hidden' in document ? 'hidden' :
 var being_at = false;
 
 // wallpaper
-axios.get('/wallpaper').then((res) => {
-  $$('body').style.backgroundImage = "url("+res.data+")";
-  $$('entry').style.visibility = 'visible';
-}).catch((err) => {
-  console.log('[Wallpaper] error retrieve.');
-});
 
 function appendMessage(html) { $$('messages').appendChild(html); }
 

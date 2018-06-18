@@ -13,7 +13,7 @@ const message_mediator = require('./lib/message_mediator');
 let wallpapar_url;
 
 // const cache trick
-axios.get('https://cn.bing.com/HPImageArchive.aspx?format=js&n=1', {
+/*axios.get('https://cn.bing.com/HPImageArchive.aspx?format=js&n=1', {
   timeout: 5000,
   responseType: 'json',
   headers: {'X-Requested-With': 'XMLHttpRequest'}
@@ -21,13 +21,13 @@ axios.get('https://cn.bing.com/HPImageArchive.aspx?format=js&n=1', {
   wallpapar_url = 'https://cn.bing.com' + r.data.images[0].url.replace('1920x1080', '800x600');
 }).catch((err) => {
   console.log('[Wallpaper] failed.');
-});
+});*/
 
 // http
 app.use('/', express.static(__dirname + '/www'));
-app.use('/wallpaper', (req, res) => {
+/*app.use('/wallpaper', (req, res) => {
   res.send(wallpapar_url);
-});
+});*/
 http.listen(config.http.port, () => {
   console.log('listening on *:' + config.http.port);
 });
