@@ -43,21 +43,73 @@ TextMessageBuilder.prototype.createMessage = function (plain_message, sender, ta
     return data;
 };
 
-TextMessageBuilder.prototype.createHTML = function (message, selfname) {
+TextMessageBuilder.prototype.createHTML = function (message, avatarsrc, selfname) {
     let content = message.content;
+    //生成@超链接
+    let reg_atuser = /@.+?\s/g;
+    let superlink = null;
+    if (reg_atuser.test(content))
+    {
+        let at_username = content.match(reg_atuser);
+        for(i in at_username)
+        {
+            if(selfname === at_username[i].slice(1, length-1))
+                superlink = "<a href=\"javascript:addAtUser(\'"+ at_username[i] +"\')\" id=\"at_user\" style = \"background-color: #b6f7b6\">" + at_username[i] + "</a>";
+            else
+                superlink = "<a href=\"javascript:addAtUser(\'"+ at_username[i] +"\')\" id=\"at_user\">" + at_username[i] + "</a>";
+            content = content.replace(at_username[i], superlink);
+        }
+    }
+    content = content.replace(/\n/g, '<br>');
+    let regLink = /(https?|ftp|file):\/\/[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|]/g;
+    let links = content.match(regLink);
+    if(links !== null) {
+        for(let i=0;i<=links.length;i++) {
+          content = content.replace(links[i],
+              '<a target="_blank" style="text-decoration-line: underline;" href="'+links[i]+'"><i>'+links[i]+'</i></a>');
+        }
+    }
+
     let sender = message.sender;
-    console.log(message);
+    avatarsrc = (avatarsrc === 'default' || avatarsrc === null || avatarsrc === undefined)
+        ? 'data/avatar/user.png'
+        : (url_base + image_base + avatarsrc);
+    //console.log(message);
     let html = document.createElement('article');
     if (selfname === sender)
         html.className = 'right';
     html.innerHTML = '<div class="avatar">' +
-        '<img alt="' + sender + '" src=' + $$(sender+'_avatar').src + ' />' + '</div>' +
+        '<img alt="' + sender + '" src=' + avatarsrc + ' />' + '</div>' +
         '<div class="msg">' + ' <div class="tri"></div>' +
         '<div class="msg_inner">' + content + '</div>' + ' </div>';
     return html;
 };
 
 TextMessageBuilder.prototype.createHTMLFromPlain = function (plain_message) {
+    //生成@超链接
+    let reg_atuser = /@.+?\s/g;
+    let superlink = null;
+    if (reg_atuser.test(plain_message))
+    {
+        let at_username = plain_message.match(reg_atuser);
+        for(i in at_username)
+        {
+            if($$('user_username').innerHTML === at_username[i].slice(1, length-1))
+                superlink = "<a href=\"javascript:addAtUser(\'"+ at_username[i] +"\')\" id=\"at_user\" style = \"background-color: #b6f7b6\">" + at_username[i] + "</a>";
+            else
+                superlink = "<a href=\"javascript:addAtUser(\'"+ at_username[i] +"\')\" id=\"at_user\">" + at_username[i] + "</a>";
+            plain_message = plain_message.replace(at_username[i], superlink);
+        }
+    }
+    plain_message = plain_message.replace(/\n/g, '<br>');
+    let regLink = /(https?|ftp|file):\/\/[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|]/g;
+    let links = plain_message.match(regLink);
+    if(links !== null) {
+        for(let i=0;i<=links.length;i++) {
+          plain_message = plain_message.replace(links[i],
+              '<a target="_blank" style="text-decoration-line: underline;" href="'+links[i]+'"><i>'+links[i]+'</i></a>');
+        }
+    }
     let html = document.createElement('article');
     html.className = 'right';
     html.innerHTML = '<div class="avatar">' +
@@ -85,14 +137,17 @@ ImageMessageBuilder.prototype.createMessage = function(plain_message, sender, ta
     return data;
 };
 
-ImageMessageBuilder.prototype.createHTML = function (message, selfname) {
+ImageMessageBuilder.prototype.createHTML = function (message, avatarsrc, selfname) {
     let image_url = message.content.match(/\[img:(\S*)\]/)[1];
     let sender = message.sender;
+    avatarsrc = (avatarsrc === 'default' || avatarsrc === null || avatarsrc === undefined)
+      ? 'data/avatar/user.png'
+      : (url_base + image_base + avatarsrc);
     let html = document.createElement('article');
     if (selfname === sender)
         html.className = 'right';
     html.innerHTML = '<div class="avatar">' +
-        '<img alt="user" src=' + $$(sender+'_avatar').src + ' />' + '</div>' +
+        '<img alt="user" src=' + avatarsrc + ' />' + '</div>' +
         '<div class="msg">' + ' <div class="tri"></div>' +
         '<div class="msg_inner">' + '<img style="max-width: 600px" src=' + url_base + image_base + image_url + ' />' + '</div>' + ' </div>';
     return html;
@@ -116,30 +171,24 @@ var MessageDirector = function () {
 
 MessageDirector.prototype.createMessage = function (content, sender, target) {
     if (content.match(/\[img:(\S*)\]/) !== null){
-        //image
         return this.imageBuilder.createMessage(content, sender, target);
-    }
-    else {
+    } else {
         return this.textBuilder.createMessage(content, sender, target);
     }
 };
 
-MessageDirector.prototype.createHTML = function (message, self) {
+MessageDirector.prototype.createHTML = function (message, avatarsrc, self) {
     if (message.content.match(/\[img:(\S*)\]/) !== null) {
-        //image
-        return this.imageBuilder.createHTML(message, self);
-    }
-    else{
-        return this.textBuilder.createHTML(message, self);
+        return this.imageBuilder.createHTML(message, avatarsrc, self);
+    } else{
+        return this.textBuilder.createHTML(message, avatarsrc, self);
     }
 };
 
 MessageDirector.prototype.createHTMLFromPlain = function (content) {
     if (content.match(/\[img:(\S*)\]/) !== null){
-        //image
         return this.imageBuilder.createHTMLFromPlain(content);
-    }
-    else {
+    } else {
         return this.textBuilder.createHTMLFromPlain(content);
     }
 };
