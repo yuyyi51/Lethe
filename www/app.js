@@ -324,73 +324,6 @@ socket.on('user_store:list',(data)=>{
     }
 });
 
-/*
-socket.on('user:get_groups', (res)=>{
-    let groupinfo = res;
-    let path = 'data/avatar/group.png';
-    let onclick_group = function () {
-        $$('input').readOnly = false;
-        if (selected_receiver === this.id){
-            return;
-        }
-        if (selected_receiver !== null){
-            $$(selected_receiver).style.backgroundColor = "";
-        }
-        $$(this.id).style.backgroundColor = "#2626ff";
-        selected_receiver = this.id;
-        is_group_chat = true;
-        console.log(this.id + ' tag clicked');
-        let main = $$('main');
-        main.style.visibility = 'visible';
-        receiver = Number(this.id.replace('group_', ''));
-        console.log(user + ' chats with group' + receiver);
-        // 2. main: retrieve history
-        while (messages.firstChild) {
-            messages.removeChild(messages.firstChild);
-        }
-        let history = message_store.GetMessage(receiver);
-        //console.log(history);
-        for (let i = 0; i < history.length; ++i){
-            let tmpMessage = history[i];
-            let msg_html = MessageDirector.GetInstance.createHTML(tmpMessage, avatar_store.get(tmpMessage.sender), user);
-            messages.appendChild(msg_html);
-        }
-        messageBox.scrollTop = messageBox.scrollHeight;
-    };
-    let ul_groups = $$('friends');
-    let li_groups = document.createElement('li');
-    li_groups.id = 'group_' + groupinfo.groupid;
-    li_groups.style.height="60px";
-    li_groups.style.padding="10px";
-    li_groups.innerHTML =
-        '<button type="button" '+' id="delete_group_'+groupinfo.groupid+'" data-dismiss="modal" '+'class="close" '+'name='+ 'group_' +groupinfo.groupid +' style="float: left; width: 10%" > '+
-        ' <span aria-hidden="true" style="color: white">×</span>' +
-        '<span class="sr-only">Close</span>'+
-        '</button>'+
-        '<div class="avatar" style="float: left; margin-left: 1em; width: 25%">' +
-        '<img alt="avatar" id=' + 'group_' + groupinfo.groupid + '_avatar src= "/' + path + '"/>' +
-        '</div >' +
-        '<div class="main_li" style="width: 50%">' +
-        '<div class="username">' + '群组_' + groupinfo.groupid + '</div>';
-    li_groups.onclick = onclick_group;
-    message_store.StoreHistory(groupinfo.groupid, groupinfo.messages);
-    message_store.StoreHistory('group_members_' + groupinfo.groupid, groupinfo.members);
-    ul_groups.appendChild(li_groups);
-    $('#delete_group_'+groupinfo.groupid).click(
-        ()=>{
-            let confirm_res=confirm('你确定要退出该群聊吗？');
-            if (confirm_res){
-                let del_info={
-                    requestUserName: user,
-                    requestGroupId:groupinfo.groupid
-                };
-                socket.emit('group:del',del_info);
-            }
-        }
-    );
-});
-*/
-
 function addGroupsList(groupid) {
     socket.emit('user:get_groups', {groupid: groupid}, (res) => {
         let groupinfo = res;
@@ -477,6 +410,7 @@ function addFriendsList(name) {
         clearInterval(timer);
         document.title = "Lethe";
         $$('input').readOnly = false;
+        $$('input').value = "";
         $$('friend_unreadTag_' + friend_name).style.display = "none";
         $$('friend_unreadNum_' + friend_name).innerHTML = '0';
         if (selected_receiver === this.id) return;
@@ -706,6 +640,7 @@ $$('open_file').addEventListener('change', function () {
     let image = this.files[0];
     if (!image.type.startsWith('image')) {
         alert('this is not a image file.');
+        $$('open_file').value = "";
         return;
     }
     //console.log(image);
@@ -713,6 +648,7 @@ $$('open_file').addEventListener('change', function () {
     let reader = new FileReader();
     if (!reader) {
         console.log('error init FileReader.');
+        $$('open_file').value = "";
         return;
     }
     reader.onload = (evt) => {
@@ -730,19 +666,6 @@ $$('select_image').onclick = () => {
     $("#open_file").trigger("click");
 };
 
-
-/*socket.on('emoji:list', (data) => {
-  for(let i = 1 ; i <= data.length; ++i) {
-    let emoji_item = document.createElement('img');
-    emoji_item.src = url_base + data[i];
-    emoji_item.onclick = () => {
-      input.value += '[emoji:' + data[i] + ']';
-      emojis.style.display = 'none';
-    };
-    emojis.appendChild(emoji_item);
-  }
-});
-*/
 
 // part 4: friends and groups controll
 //add
