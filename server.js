@@ -10,6 +10,8 @@ const config = require('./lib/config');
 const mongodb = require('./lib/db');
 const db = new mongodb(config.db);
 const message_mediator = require('./lib/message_mediator');
+
+var arrAllSocket = [];
 let wallpapar_url;
 
 // const cache trick
@@ -155,7 +157,9 @@ io.on('connection', (socket) => {
 
 socket.on('user_store:add',(data)=>{
     db.appand_friend_store(data.requestUserName,data.requestFriendName,(res)=>{
+
     socket.emit('user_store:add',res);
+    mediator.Refresh(data.requestFriendName);
 });
 });
 //待加好友列表
@@ -168,6 +172,7 @@ socket.on('user_store:list',(data)=>{
 socket.on('user_insert:add',(data)=>{
     db.insert_friend(data.requestUserName,data.requestFriendName,data.decision,(res)=>{
     socket.emit('user_insert:add',res);
+     mediator.Refresh(data.requestFriendName);
 });
 });
 
@@ -297,7 +302,9 @@ socket.on('user_insert:add',(data)=>{
     // on:    { chat_id: str, name: str }
     socket.on('groupchat:add', (data) => {
         console.log("Add: " + data.name + " " + data.chat_id);
-        db.add_group(data.chat_id, data.name)
+
+        db.add_group(data.chat_id, data.name);
+        mediator.Refresh(data.name);
     });
     //获取成员名单
     socket.on('groupchat:get_list', (data) => {

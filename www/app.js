@@ -809,6 +809,12 @@ socket.on('user_insert:add',(res)=>{
         window.location.reload(true);
     }
 });
+socket.on('refresh:now',(data)=>{
+    if(data===true)
+{
+    window.location.reload(true);
+}
+});
 //group controll
 
 //创建群聊
