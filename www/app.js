@@ -18,6 +18,7 @@ var hiddenProperty = 'hidden' in document ? 'hidden' :
     'webkitHidden' in document ? 'webkitHidden' :
         'mozHidden' in document ? 'mozHidden' :
             null;
+var being_at = false;
 
 function appendMessage(html) {
     $$('messages').appendChild(html);
@@ -149,7 +150,11 @@ function FlashTitle(title,content){
         if (index % 2) {
             $('title').text('【　　　】from '+title );//这里是中文全角空格，其他不行
         } else {
-            $('title').text('【新消息】from '+title );
+            if(being_at == false)
+                $('title').text('【新消息】from '+title );
+            else {
+                $('title').text('【有人@你】from ' + title);
+            }
         }
         index++;
 
@@ -172,7 +177,9 @@ function clearTitle(){
 }
 function newNotification(title, options) {
     console.log("createNotification");
-    title = title || '新的消息'
+    title = title || '新的消息';
+    if(being_at)
+        title = '【有人@你】' + title;
     options = options || {
         body: '默认消息',
         icon: 'https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1529265914393&di=d7674e59ceee8914874e00178d2160e4&imgtype=0&src=http%3A%2F%2Fpic.58pic.com%2F10%2F81%2F55%2F47bOOOPIC9f.jpg'
@@ -182,7 +189,12 @@ function newNotification(title, options) {
 
 
 socket.on('chat:message', (msg) => {
-
+    let checkat = '@' + authinfo.username + ' ';
+        if(msg.message.content.indexOf(checkat)!= -1) {
+            being_at = true;
+        }
+        else
+            being_at = false;
     console.log(msg.message.content);
     FlashTitle(msg.sender,msg.message.content);
 var a = {
@@ -211,6 +223,12 @@ if(nowreceiver !=msg.sender)
 
 socket.on('groupchat:message', (msg) => {
     if(msg.sender!=$$('user_username').innerText){
+        var checkat = '@' + authinfo.username + ' ';
+        if(msg.message.content.indexOf(checkat) != -1) {
+            being_at = true;
+        }
+        else
+            being_at = false;
         FlashTitle("新群聊消息",msg.content);
     }
 var a = {
@@ -380,6 +398,7 @@ function addGroupsList(groupid) {
             main.style.visibility = 'visible';
             receiver = Number(this.id.replace('group_', ''));
             console.log(user + ' chats with group' + receiver);
+            $$('chat_title').textContent = '在群组 ' + (groupinfo.groupname || receiver) + ' 内聊天';
             // 2. main: retrieve history
             while (messages.firstChild) {
                 messages.removeChild(messages.firstChild);
@@ -459,6 +478,7 @@ function addFriendsList(name) {
         main.style.visibility = 'visible';
         receiver = this.id.replace('friend_', '');
         console.log(user + ' chats with ' + receiver);
+        $$('chat_title').textContent = '与 ' + receiver + ' 聊天';
 
         // 2. main: retrieve history
         let sel = { sender: user, receiver: receiver };
@@ -1105,4 +1125,12 @@ window.onload = function () {
             Notification.requestPermission();
         }
     }
+}
+
+function addAtUser(username) {
+    username = username.slice(1, length - 1);
+    $('#add-body').show();
+    $('#add-bg').show();
+    $('#add-friend-name').val(username);
+    $('#add-friend-name').attr("autofocus", "autofocus");
 }

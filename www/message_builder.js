@@ -45,6 +45,17 @@ TextMessageBuilder.prototype.createMessage = function (plain_message, sender, ta
 
 TextMessageBuilder.prototype.createHTML = function (message, avatarsrc, selfname) {
     let content = message.content;
+    //生成@超链接
+    let reg_atuser = /@.+?\s/g;
+    if (reg_atuser.test(content))
+    {
+        let at_username = content.match(reg_atuser);
+        for(i in at_username)
+        {
+            let superlink = "<a href=\"javascript:addAtUser(\'"+ at_username[i] +"\')\" id=\"at_user\">" + at_username[i] + "</a>";
+            content = content.replace(at_username[i], superlink);
+        }
+    }
     content = content.replace(/\n/g, '<br>');
     let sender = message.sender;
     if(avatarsrc === 'default' || avatarsrc === null || avatarsrc === undefined)
