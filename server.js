@@ -151,6 +151,27 @@ io.on('connection', (socket) => {
   /*****************/
   /* Part 2 : Chat */
   /*****************/
+// 添加待加好友
+// on:    { requestUserName: str ,requestFriendName: str}
+// emit:  result
+socket.on('user_store:add',(data)=>{
+    db.appand_friend_store(data.requestUserName,data.requestFriendName,(res)=>{
+    socket.emit('user_store:add',res);
+});
+});
+//待加好友列表
+socket.on('user_store:list',(data)=>{
+    db.get_user_store(data,(res)=>{
+    socket.emit('user_store:list',res);
+});
+});
+// 是否同意添加好友
+socket.on('user_insert:add',(data)=>{
+    db.insert_friend(data.requestUserName,data.requestFriendName,data.decision,(res)=>{
+    socket.emit('user_insert:add',res);
+});
+});
+
 
   // desc:  好友列表(会话列表)
   // on:    null
@@ -278,6 +299,13 @@ io.on('connection', (socket) => {
     socket.on('groupchat:add', (data) => {
         console.log("Add: " + data.name + " " + data.chat_id);
         db.add_group(data.chat_id, data.name)
+    });
+    //获取成员名单
+    socket.on('groupchat:get_list', (data) => {
+        console.log("Get list of group: " + data);
+        db.get_group_list(data, (res) => {
+            socket.emit('groupchat:get_list', res);
+        });
     });
 
   /**********************/
