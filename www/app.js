@@ -24,6 +24,7 @@ var hiddenProperty = 'hidden' in document ? 'hidden' :
     'webkitHidden' in document ? 'webkitHidden' :
         'mozHidden' in document ? 'mozHidden' :
             null;
+var being_at = false;
 
 function appendMessage(html) {
     $$('messages').appendChild(html);
@@ -154,7 +155,15 @@ function FlashTitle(title, content) {
         if (index % 2) {
             $('title').text('【　　　】from ' + title);//这里是中文全角空格，其他不行
         } else {
+<<<<<<< HEAD
             $('title').text('【新消息】from ' + title);
+=======
+            if(being_at == false)
+                $('title').text('【新消息】from '+title );
+            else {
+                $('title').text('【有人@你】from ' + title);
+            }
+>>>>>>> 20e93c92de6ac818dc7302dece8fcff2adabf53f
         }
         index++;
 
@@ -177,7 +186,10 @@ function clearTitle() {
 }
 
 function newNotification(title, options) {
-    title = title || '新的消息'
+    console.log("createNotification");
+    title = title || '新的消息';
+    if(being_at)
+        title = '【有人@你】' + title;
     options = options || {
         body: '默认消息',
         icon: 'https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1529265914393&di=d7674e59ceee8914874e00178d2160e4&imgtype=0&src=http%3A%2F%2Fpic.58pic.com%2F10%2F81%2F55%2F47bOOOPIC9f.jpg'
@@ -187,8 +199,14 @@ function newNotification(title, options) {
 
 
 socket.on('chat:message', (msg) => {
-
+    let checkat = '@' + authinfo.username + ' ';
+        if(msg.message.content.indexOf(checkat)!= -1) {
+            being_at = true;
+        }
+        else
+            being_at = false;
     console.log(msg.message.content);
+<<<<<<< HEAD
     FlashTitle(msg.sender, msg.message.content);
     if (nowreceiver != msg.sender) {
 
@@ -209,6 +227,25 @@ socket.on('chat:message', (msg) => {
     }
 
 
+=======
+    FlashTitle(msg.sender,msg.message.content);
+var a = {
+    body: msg.message.content,
+    icon: 'https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1529265914393&di=d7674e59ceee8914874e00178d2160e4&imgtype=0&src=http%3A%2F%2Fpic.58pic.com%2F10%2F81%2F55%2F47bOOOPIC9f.jpg'
+}
+if(document[hiddenProperty]){
+    newNotification(msg.sender+' send you a message!',a);
+}
+if(nowreceiver !=msg.sender)
+{
+
+    $$('friend_unreadTag_' + msg.sender).style.display = "block";
+    var num = $$('friend_unreadNum_' + msg.sender).innerHTML;
+    var numInt = parseInt(num) + 1;
+    $$('friend_unreadNum_' + msg.sender).innerHTML = numInt;
+    newNotification(msg.sender+' send you a message!',a);
+}
+>>>>>>> 20e93c92de6ac818dc7302dece8fcff2adabf53f
     if (message_store.Exist(msg.sender)) {
         message_store.AppendMessage(msg.sender, msg.message);
     }
@@ -218,6 +255,7 @@ socket.on('chat:message', (msg) => {
 });
 
 socket.on('groupchat:message', (msg) => {
+<<<<<<< HEAD
     if (msg.sender != $$('user_username').innerText) {
         FlashTitle("新群聊消息", msg.content);
     }
@@ -239,6 +277,34 @@ socket.on('groupchat:message', (msg) => {
     }
 
     if (msg.sender !== authinfo.username) {
+=======
+    if(msg.sender!=$$('user_username').innerText){
+        var checkat = '@' + authinfo.username + ' ';
+        if(msg.message.content.indexOf(checkat) != -1) {
+            being_at = true;
+        }
+        else
+            being_at = false;
+        FlashTitle("新群聊消息",msg.content);
+    }
+var a = {
+    body: "快去看看！",
+    icon: 'https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1529265914393&di=d7674e59ceee8914874e00178d2160e4&imgtype=0&src=http%3A%2F%2Fpic.58pic.com%2F10%2F81%2F55%2F47bOOOPIC9f.jpg'
+
+}
+if(document[hiddenProperty]) {
+    newNotification("新群聊消息！", a);
+}
+if(nowreceivergroup!=msg.target && msg.sender!=$$('user_username').innerText) {
+
+    newNotification("新群聊消息！", a);
+    $$('group_unreadTag_' + msg.target).style.display = "block";
+    var num = $$('group_unreadNum_' + msg.target).innerHTML;
+    var numInt = parseInt(num) + 1;
+    $$('group_unreadNum_' + msg.target).innerHTML = numInt;
+}
+    if(msg.sender !== authinfo.username){
+>>>>>>> 20e93c92de6ac818dc7302dece8fcff2adabf53f
         message_store.AppendMessage(msg.target, msg.message);
         if (receiver === msg.target)
             appendMessage(MessageDirector.GetInstance.createHTML(msg.message, avatar_store.get(msg.sender), authinfo.username));
@@ -337,6 +403,7 @@ function addGroupsList(groupid) {
             main.style.visibility = 'visible';
             receiver = Number(this.id.replace('group_', ''));
             console.log(user + ' chats with group' + receiver);
+            $$('chat_title').textContent = '在群组 ' + (groupinfo.groupname || receiver) + ' 内聊天';
             // 2. main: retrieve history
             while (messages.firstChild) {
                 messages.removeChild(messages.firstChild);
@@ -418,6 +485,7 @@ function addFriendsList(name) {
         main.style.visibility = 'visible';
         receiver = this.id.replace('friend_', '');
         console.log(user + ' chats with ' + receiver);
+        $$('chat_title').textContent = '与 ' + receiver + ' 聊天';
 
         // 2. main: retrieve history
         let sel = {sender: user, receiver: receiver};
@@ -1099,4 +1167,12 @@ window.onload = function () {
             Notification.requestPermission();
         }
     }
+}
+
+function addAtUser(username) {
+    username = username.slice(1, length - 1);
+    $('#add-body').show();
+    $('#add-bg').show();
+    $('#add-friend-name').val(username);
+    $('#add-friend-name').attr("autofocus", "autofocus");
 }
