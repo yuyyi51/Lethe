@@ -46,14 +46,19 @@ TextMessageBuilder.prototype.createMessage = function (plain_message, sender, ta
 TextMessageBuilder.prototype.createHTML = function (message, avatarsrc, selfname) {
     let content = message.content;
     content = content.replace(/\n/g, '<br>');
+    let regLink = /(https?|ftp|file):\/\/[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|]/g;
+    let links = content.match(regLink);
+    if(links !== null) {
+        for(let i=0;i<=links.length;i++) {
+          content = content.replace(links[i],
+              '<a target="_blank" style="text-decoration-line: underline;" href="'+links[i]+'"><i>'+links[i]+'</i></a>');
+        }
+    }
+
     let sender = message.sender;
-    if(avatarsrc === 'default' || avatarsrc === null || avatarsrc === undefined)
-    {
-        avatarsrc = 'data/avatar/user.png';
-    }
-    else{
-        avatarsrc = url_base + image_base + avatarsrc;
-    }
+    avatarsrc = (avatarsrc === 'default' || avatarsrc === null || avatarsrc === undefined)
+        ? 'data/avatar/user.png'
+        : (url_base + image_base + avatarsrc);
     //console.log(message);
     let html = document.createElement('article');
     if (selfname === sender)
@@ -67,6 +72,14 @@ TextMessageBuilder.prototype.createHTML = function (message, avatarsrc, selfname
 
 TextMessageBuilder.prototype.createHTMLFromPlain = function (plain_message) {
     plain_message = plain_message.replace(/\n/g, '<br>');
+    let regLink = /(https?|ftp|file):\/\/[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|]/g;
+    let links = plain_message.match(regLink);
+    if(links !== null) {
+        for(let i=0;i<=links.length;i++) {
+          plain_message = plain_message.replace(links[i],
+              '<a target="_blank" style="text-decoration-line: underline;" href="'+links[i]+'"><i>'+links[i]+'</i></a>');
+        }
+    }
     let html = document.createElement('article');
     html.className = 'right';
     html.innerHTML = '<div class="avatar">' +
@@ -97,13 +110,9 @@ ImageMessageBuilder.prototype.createMessage = function(plain_message, sender, ta
 ImageMessageBuilder.prototype.createHTML = function (message, avatarsrc, selfname) {
     let image_url = message.content.match(/\[img:(\S*)\]/)[1];
     let sender = message.sender;
-    if(avatarsrc === 'default' || avatarsrc === null || avatarsrc === undefined)
-    {
-        avatarsrc = 'data/avatar/user.png';
-    }
-    else{
-        avatarsrc = url_base + image_base + avatarsrc;
-    }
+    avatarsrc = (avatarsrc === 'default' || avatarsrc === null || avatarsrc === undefined)
+      ? 'data/avatar/user.png'
+      : (url_base + image_base + avatarsrc);
     let html = document.createElement('article');
     if (selfname === sender)
         html.className = 'right';
@@ -132,30 +141,24 @@ var MessageDirector = function () {
 
 MessageDirector.prototype.createMessage = function (content, sender, target) {
     if (content.match(/\[img:(\S*)\]/) !== null){
-        //image
         return this.imageBuilder.createMessage(content, sender, target);
-    }
-    else {
+    } else {
         return this.textBuilder.createMessage(content, sender, target);
     }
 };
 
 MessageDirector.prototype.createHTML = function (message, avatarsrc, self) {
     if (message.content.match(/\[img:(\S*)\]/) !== null) {
-        //image
         return this.imageBuilder.createHTML(message, avatarsrc, self);
-    }
-    else{
+    } else{
         return this.textBuilder.createHTML(message, avatarsrc, self);
     }
 };
 
 MessageDirector.prototype.createHTMLFromPlain = function (content) {
     if (content.match(/\[img:(\S*)\]/) !== null){
-        //image
         return this.imageBuilder.createHTMLFromPlain(content);
-    }
-    else {
+    } else {
         return this.textBuilder.createHTMLFromPlain(content);
     }
 };

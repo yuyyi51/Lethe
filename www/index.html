@@ -7,31 +7,43 @@
     <!-- CSS -->
     <link rel="stylesheet" type="text/css" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css"/>
     <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/icon?family=Material+Icons"/>
+    <link rel="stylesheet" type="text/css" href="w3.css"/>
     <link rel="stylesheet" type="text/css" href="app.css"/>
 
     <title>Lethe</title>
 </head>
-<body id="body" style="background-color: lightcyan; visibility: hidden;">
+<body id="body" style="background-repeat:no-repeat; background-size:100% 100%;-moz-background-size:100% 100%;">
 
 <!-- 未登录时显示注册/登陆表单 -->
-<article id="entry" style="position:absolute; margin: auto; width: 300px;">
-    <h1>Lethe</h1>
-    <hr/>
-    <div class="form-group">
-        <label>Username</label>
-        <input type="text" class="form-control" id="username">
+<article id="entry" class="w3-card-16 w3-round-medium w3-light-grey"
+         style="position:absolute; margin: auto; min-width: 400px; visibility: hidden">
+  <header class="w3-container w3-blue w3-center">
+    <h3>Lethe Project</h3>
+  </header>
+  <div class="w3-container">
+    <p class="w3-input-group">
+      <label class="w3-label w3-validate">Username</label>
+      <input type="text" class="w3-input w3-border" id="username">
+    </p>
+    <p class="w3-input-group">
+      <label class="w3-label w3-validate">Password</label>
+      <input type="password" class="w3-input w3-border" id="password">
+    </p>
+  </div>
+  <footer class="w3-container">
+    <div class="w3-row-padding">
+      <div class="w3-half">
+        <button class="w3-input w3-indigo" id="btn_register">注册</button>
+      </div>
+      <div class="w3-half">
+        <button class="w3-input w3-blue" id="btn_login">登录</button>
+      </div>
     </div>
-    <div class="form-group">
-        <label>Password</label>
-        <input type="password" class="form-control" id="password">
-    </div>
-    <button type="button" class="btn btn-primary" id="btn_register">注册</button>
-    <button type="button" class="btn btn-primary" id="btn_login">登录</button>
+  </footer>
+  <p></p>
 </article>
 
 <!-- 登录后显示主界面 -->
-
-
 <article id="container" style="width: 100%; height: 100%; visibility: hidden;">
     <div id="add-body">
 
@@ -122,20 +134,19 @@
     <div id="add-bg"></div>
     <aside>
         <header>
-            <div id="div_avatar" class="avatar">
+            <div id="div_avatar" class="avatar" style="cursor: pointer;">
                 <img alt="avatar" id="user_avatar" src="/data/avatar/user.png"/>
             </div>
-        <div id="user_username"></div>
-        <div>
-          <input id="change_avatar" style="display: none" type="file">
-            <a class="material-icons" href="javascript:" style="color: #ffffff; text-decoration: none" id="log_out">exit_to_app</a>
-            <!--a class="material-icons" href="javascript:" style="color: #ffffff; text-decoration: none" id="user_info">person</a-->
-            <a class="material-icons" href="javascript:" style="color: #ffffff; text-decoration: none" id="add-btn">add_circle_outline</a>
-        </div>
-
-      </header>
-      <br />
-      <ul id="friends"></ul>
+            <div id="user_username"></div>
+            <div>
+              <input id="change_avatar" style="display: none" type="file">
+                <a class="material-icons" href="javascript:" style="color: #ffffff; text-decoration: none" id="log_out">exit_to_app</a>
+                <!--a class="material-icons" href="javascript:" style="color: #ffffff; text-decoration: none" id="user_info">person</a-->
+                <a class="material-icons" href="javascript:" style="color: #ffffff; text-decoration: none" id="add-btn">add_circle_outline</a>
+            </div>
+        </header>
+        <br />
+        <ul id="friends"></ul>
     </aside>
 
     <section id="main" style="width: 80%;">
@@ -143,25 +154,25 @@
       <footer style="height: 5%">
         <div>
           <input id="open_file" type="file" style="display: none" />
-          <i id="select_image" class="material-icons">image</i>
-          <i id="select_emoji" class="material-icons" data-toggle="popover">tag_faces</i>
+          <i id="select_image" class="material-icons" style="cursor: pointer">image</i>
+          <i id="select_emoji" class="material-icons" style="cursor: pointer" data-toggle="popover">tag_faces</i>
         </div>
       </footer>
       <footer style="height: 25%">
-        <textarea id="input" readonly placeholder="" style="height: 100%; "></textarea>
+        <textarea id="input" readonly placeholder="" style="height: 100%">（请选择一个联系人或群组以开始……）</textarea>
         <div style="position: absolute; right: 10px; bottom: 10px">
-          <i id="send" class="material-icons">send</i>
+          <i id="send" class="material-icons" style="cursor: pointer">send</i>
         </div>
       </footer>
     </section>
 </article>
-
 
   <!-- JavaScript -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/store.js/1.3.20/store.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.18.0/axios.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.0/socket.io.dev.js"></script>
   <script src="https://int-2.cn/script/spark-md5/spark-md5.min.js"></script>
   <script src="/socket.io/socket.io.js"></script> <!-- this script is provided by socket.io at runtime -->

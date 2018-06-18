@@ -19,13 +19,15 @@ var hiddenProperty = 'hidden' in document ? 'hidden' :
         'mozHidden' in document ? 'mozHidden' :
             null;
 
-function appendMessage(html) {
-    $$('messages').appendChild(html);
-}
+// wallpaper
+axios.get('/wallpaper').then((res) => {
+  $$('body').style.backgroundImage = "url("+res.data+")";
+  $$('entry').style.visibility = 'visible';
+}).catch((err) => {
+  console.log('[Wallpaper] error retrieve.');
+});
 
-function isImage(content) {
-    return content.match(/\[img:.*\]/) !== null;
-}
+function appendMessage(html) { $$('messages').appendChild(html); }
 
 // Part 2: login status control
 function change_login_status(status) {
@@ -45,17 +47,21 @@ function change_login_status(status) {
 }
 
 $$('btn_register').onclick = () => {
+  let u = $$('username').value;
+  let p = $$('password').value;
+  if (u === '' || u === undefined
+      || p === '' || p === undefined) return;
   authinfo = {
-    username: $$('username').value,
-    password: SparkMD5.hash($$('password').value)
+    username: u,
+    password: SparkMD5.hash(p),
   };
   socket.emit('user:register', authinfo);
 };
 socket.on('user:register', (res) => {
   alert(authinfo.username +
       (res === true
-          ? " register succeed, please login."
-          : " register failed."));
+          ? " 注册成功，请登录"
+          : " 注册失败"));
 });
 socket.on('user:offline', () => {
     alert("检测到有其它终端登录该账号，您已被强制下线");
@@ -70,7 +76,7 @@ $$('btn_login').onclick = () => {
 };
 socket.on('user:login', (res) => {
   if(res === false) {
-    alert(authinfo.username + " login failed.");
+    alert(authinfo.username + " 登陆失败");
     store.remove('authinfo');
     return;
   }
@@ -97,10 +103,8 @@ socket.on('user:login', (res) => {
   // });
 });
 
-$$('log_out').onclick = () => {  // as logout btn
-  if (confirm('are you sure to logout?')) {
-    change_login_status(false);
-  }
+$$('log_out').onclick = () => {
+  if (confirm('确认注销吗?')) change_login_status(false);
 };
 $$('user_avatar').onclick = () => {
   $("#change_avatar").trigger("click");
@@ -109,7 +113,7 @@ $$('change_avatar').addEventListener('change', function () {
     if (this.files.length === 0) return;
     let image = this.files[0];
     if(!image.type.startsWith('image')) {
-        alert('this is not a image file.');
+        alert('格式错误：请选择图片文件！');
         return;
     }
     upload_image.suffix = image.name.toLowerCase().split('.').splice(-1)[0];
@@ -141,7 +145,6 @@ var timer = null;
 
 
 function FlashTitle(title,content){
-
     var index = 0;
     clearInterval(timer);
     timer = setInterval(function () {
@@ -160,9 +163,7 @@ function FlashTitle(title,content){
     if (!document[hiddenProperty]) {
         //document.title='被发现啦(*´∇｀*)';
         //document.title="Lethe";
-    }
-    else{
-    }
+    } else{ }
 }
 
 function clearTitle(){
@@ -178,33 +179,24 @@ function newNotification(title, options) {
     return new Notification(title, options);
 }
 
-
-
-
 socket.on('chat:message', (msg) => {
-
     console.log(msg.message.content);
     FlashTitle(msg.sender,msg.message.content);
-if(nowreceiver !=msg.sender)
-{
+    if(nowreceiver !== msg.sender) {
+        var a = {
+            body: msg.message.content,
+            icon: 'https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1529265914393&di=d7674e59ceee8914874e00178d2160e4&imgtype=0&src=http%3A%2F%2Fpic.58pic.com%2F10%2F81%2F55%2F47bOOOPIC9f.jpg'
 
-    var a = {
-        body: msg.message.content,
-        icon: 'https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1529265914393&di=d7674e59ceee8914874e00178d2160e4&imgtype=0&src=http%3A%2F%2Fpic.58pic.com%2F10%2F81%2F55%2F47bOOOPIC9f.jpg'
+        }
+        if(document[hiddenProperty]){
+            newNotification(msg.sender+' send you a message!',a);
+        }
 
+        $$('friend_unreadTag_' + msg.sender).style.display = "block";
+        var num = $$('friend_unreadNum_' + msg.sender).innerHTML;
+        var numInt = parseInt(num) + 1;
+        $$('friend_unreadNum_' + msg.sender).innerHTML = numInt;
     }
-    if(document[hiddenProperty]){
-        newNotification(msg.sender+' send you a message!',a);
-    }
-
-
-    $$('friend_unreadTag_' + msg.sender).style.display = "block";
-    var num = $$('friend_unreadNum_' + msg.sender).innerHTML;
-    var numInt = parseInt(num) + 1;
-    $$('friend_unreadNum_' + msg.sender).innerHTML = numInt;
-}
-
-
 
     if (message_store.Exist(msg.sender)) {
         message_store.AppendMessage(msg.sender, msg.message);
@@ -218,22 +210,22 @@ socket.on('groupchat:message', (msg) => {
     if(msg.sender!=$$('user_username').innerText){
         FlashTitle("新群聊消息",msg.content);
     }
-if(nowreceivergroup!=msg.target && msg.sender!=$$('user_username').innerText) {
+    if(nowreceivergroup!=msg.target && msg.sender!=$$('user_username').innerText) {
 
-    var a = {
-        body: "快去看看！",
-        icon: 'https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1529265914393&di=d7674e59ceee8914874e00178d2160e4&imgtype=0&src=http%3A%2F%2Fpic.58pic.com%2F10%2F81%2F55%2F47bOOOPIC9f.jpg'
+        var a = {
+            body: "快去看看！",
+            icon: 'https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1529265914393&di=d7674e59ceee8914874e00178d2160e4&imgtype=0&src=http%3A%2F%2Fpic.58pic.com%2F10%2F81%2F55%2F47bOOOPIC9f.jpg'
 
+        }
+        if(document[hiddenProperty]) {
+            newNotification("新群聊消息！", a);
+        }
+
+        $$('group_unreadTag_' + msg.target).style.display = "block";
+        var num = $$('group_unreadNum_' + msg.target).innerHTML;
+        var numInt = parseInt(num) + 1;
+        $$('group_unreadNum_' + msg.target).innerHTML = numInt;
     }
-    if(document[hiddenProperty]) {
-        newNotification("新群聊消息！", a);
-    }
-
-    $$('group_unreadTag_' + msg.target).style.display = "block";
-    var num = $$('group_unreadNum_' + msg.target).innerHTML;
-    var numInt = parseInt(num) + 1;
-    $$('group_unreadNum_' + msg.target).innerHTML = numInt;
-}
 
     if(msg.sender !== authinfo.username){
         message_store.AppendMessage(msg.target, msg.message);
@@ -320,6 +312,7 @@ function addGroupsList(groupid) {
             nowreceiver = null;
             nowreceivergroup = groupid;
             $$('input').readOnly = false;
+            $$('input').value = '';
             if (selected_receiver === this.id){
                 return;
             }
@@ -363,14 +356,13 @@ function addGroupsList(groupid) {
             '<div class="main_li" style="width: 50%">' +
             '<div class="username"><span>' + (groupinfo.groupname || ( "群组_"+groupinfo.groupid )) + '<div style="float:right;display: none"  id="group_unreadTag_'+  groupinfo.groupid +  '">'+'<span style="border-radius: 50%;    height: 20px;    width: 20px;    display: inline-block;    background: #FA676A;      vertical-align: top;">'+
             '<span style="display: block;    color: #FFFFFF;    height: 20px;    line-height: 20px;    text-align: center" id="group_unreadNum_'+groupinfo.groupid+'">0</span>'+
-            '</span>'+'</div>'+ '</span><i style="float: right" class="material-icons" id="conf_' + groupinfo.groupid + '">build</i></div>'
+            '</span>'+'</div>'+ '</span><i style="cursor: pointer ;float: right" class="material-icons" id="conf_' + groupinfo.groupid + '">build</i></div>'
             ;
         li_groups.onclick = onclick_group;
         message_store.StoreHistory(groupinfo.groupid, groupinfo.messages);
         message_store.StoreHistory('group_members_' + groupinfo.groupid, groupinfo.members);
         ul_groups.appendChild(li_groups);
-        $('#delete_group_'+groupinfo.groupid).click(
-            ()=>{
+        $('#delete_group_'+groupinfo.groupid).click(()=>{
                 let confirm_res=confirm('你确定要退出该群聊吗？');
                 if (confirm_res){
                     let del_info={
@@ -381,8 +373,7 @@ function addGroupsList(groupid) {
                 }
             }
         );
-        $('#conf_' + groupinfo.groupid).click(
-            ()=>{
+        $('#conf_' + groupinfo.groupid).click(()=>{
                 group_config = groupinfo.groupid;
                 $('#conf-body').show();
             }
@@ -397,6 +388,7 @@ function addFriendsList(name) {
         clearInterval(timer);
         document.title="Lethe";
         $$('input').readOnly = false;
+        $$('input').value = '';
         $$('friend_unreadTag_'+friend_name).style.display = "none";
         $$('friend_unreadNum_'+friend_name).innerHTML = '0';
         if (selected_receiver === this.id){
@@ -870,7 +862,6 @@ socket.on('renew:members',(username, GID, type)=>{
 
 // Finally: main start
 /* auto login */
-
 //TODO: 为了测试把自动登录关掉了
 // authinfo = store.get('authinfo'); // 用户登陆信息 { username: str, password: str }
 // user = authinfo ? authinfo.username : null; // 暂存用户名
@@ -879,7 +870,7 @@ socket.on('renew:members',(username, GID, type)=>{
 //   socket.emit('user:login', authinfo);
 // }
 
-/* ok, now show HTML body*/
+// ok, now show HTML body
 $$('body').style.visibility = 'visible';
 
 /*by Gouyiqin*/
@@ -906,105 +897,28 @@ function add_emoji(e) {
         $$('input').value += str;
     }
 }
-function insertText(obj,str) {
-
-}
 
 function get_emoji_list() {
-    let emoji=
-        "😀\n" +
-        "😁\n" +
-        "😂\n" +
-        "😃\n" +
-        "😄\n" +
-        "😅\n" +
-        "😆\n" +
-        "😇\n" +
-        "😈\n" +
-        "😉\n" +
-        "😊\n" +
-        "😋\n" +
-        "😌\n" +
-        "😍\n" +
-        "😎\n" +
-        "😏\n" +
-        "😐\n" +
-        "😑\n" +
-        "😒\n" +
-        "😓\n" +
-        "😔\n" +
-        "😕\n" +
-        "😖\n" +
-        "😗\n" +
-        "😘\n" +
-        "😙\n" +
-        "😚\n" +
-        "😛\n" +
-        "😜\n" +
-        "😝\n" +
-        "😞\n" +
-        "😟\n" +
-        "😠\n" +
-        "😡\n" +
-        "😢\n" +
-        "😣\n" +
-        "😤\n" +
-        "😥\n" +
-        "😦\n" +
-        "😧\n" +
-        "😨\n" +
-        "😩\n" +
-        "😪\n" +
-        "😫\n" +
-        "😬\n" +
-        "😭\n" +
-        "😮\n" +
-        "😯\n" +
-        "😰\n" +
-        "😱\n" +
-        "😲\n" +
-        "😳\n" +
-        "😴\n" +
-        "😵\n" +
-        "😶\n" +
-        "😷\n" +
-        "😸\n" +
-        "😹\n" +
-        "😺\n" +
-        "😻\n" +
-        "😼\n" +
-        "😽\n" +
-        "😾\n" +
-        "😿\n" +
-        "🙀\n" +
-        "🙅\n" +
-        "🙆\n" +
-        "🙇\n" +
-        "🙈\n" +
-        "🙉\n" +
-        "🙊\n" +
-        "🙋\n" +
-        "🙌\n" +
-        "🙍\n" +
-        "🙎\n" +
-        "🙏";
-    let emojilist=[];
-    //console.log(emoji.split("\n").length)
-    for(let i=0;i<emoji.split("\n").length;i=i+4)
-    {
-        emojilist+="<div>"+
-            "  <button type=\"button\" class=\"btn btn-default\" onclick=\"add_emoji(this)\">" +emoji.split("\n")[i]+
-            "</button>\n" +
-            "  <button type=\"button\" class=\"btn btn-default\" onclick=\"add_emoji(this)\">" +emoji.split("\n")[i+1]+
-            "</button>\n" +
-            "  <button type=\"button\" class=\"btn btn-default\" onclick=\"add_emoji(this)\">" +emoji.split("\n")[i+2]+
-            "</button>\n" +
-            "  <button type=\"button\" class=\"btn btn-default\" onclick=\"add_emoji(this)\">" +emoji.split("\n")[i+3]+
-            "</button>\n" +
-                "</div>";
+    let emojis=["😀", "😁","😂","😃","😄","😅","😆","😇",
+      "😈","😉","😊","😋","😌","😍","😎","😏","😐","😑","😒",
+      "😓","😔","😕","😖","😗","😘","😙","😚","😛","😜","😝",
+      "😞","😟","😠","😡","😢","😣","😤","😥","😦","😧","😨",
+      "😩","😪","😫","😬","😭","😮","😯","😰","😱","😲","😳",
+      "😴","😵","😶","😷","😸","😹","😺","😻","😼","😽","😾",
+      "😿","🙀","🙅","🙆","🙇","🙈","🙉","🙊","🙋","🙌","🙍",
+      "🙎","🙏"];
+    let emojilist="";
+    for(let i=0;i<emojis.length/4;i++) {
+        emojilist+="<div>";
+        for (let j=0;j<=3;j++) {
+          emojilist+="<button type=\"button\" class=\"btn btn-default\" onclick=\"add_emoji(this)\">"
+              +emojis[i]+"</button>";
+        }
+        emojilist+="</div>";
     }
     return emojilist;
 }
+
 $(document).ready(function () {
     $('#select_emoji').popover(
         {
@@ -1028,7 +942,6 @@ $(document).ready(function () {
 //弹窗隐藏
 document.body.addEventListener('click', function (event)
 {
-
     var target = $(event.target);
     if (!target.hasClass('popover') //弹窗内部点击不关闭
         && target.parent('.popover-content').length === 0
@@ -1040,11 +953,10 @@ document.body.addEventListener('click', function (event)
         $('#select_emoji').popover('hide');
     }
 });
-window.onload = function () {
-    if(window.Notification){
-        if(Notification.permission === 'granted'){
-        }else{
-            Notification.requestPermission();
-        }
+window.onload = () => {
+  if(window.Notification) {
+    if(Notification.permission !== 'granted') {
+      Notification.requestPermission();
     }
+  }
 }
