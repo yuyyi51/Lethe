@@ -198,6 +198,7 @@ if(nowreceiver !=msg.sender)
     var num = $$('friend_unreadNum_' + msg.sender).innerHTML;
     var numInt = parseInt(num) + 1;
     $$('friend_unreadNum_' + msg.sender).innerHTML = numInt;
+    newNotification(msg.sender+' send you a message!',a);
 }
     if (message_store.Exist(msg.sender)) {
         message_store.AppendMessage(msg.sender, msg.message);
@@ -221,7 +222,7 @@ if(document[hiddenProperty]) {
 }
 if(nowreceivergroup!=msg.target && msg.sender!=$$('user_username').innerText) {
 
-
+    newNotification("新群聊消息！", a);
     $$('group_unreadTag_' + msg.target).style.display = "block";
     var num = $$('group_unreadNum_' + msg.target).innerHTML;
     var numInt = parseInt(num) + 1;
