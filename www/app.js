@@ -195,6 +195,7 @@ function newNotification(title, options) {
 
 
 socket.on('chat:message', (msg) => {
+    let notiflag = 0;
     let checkat = '@' + authinfo.username + ' ';
         if(msg.message.content.indexOf(checkat)!= -1) {
             being_at = true;
@@ -208,6 +209,7 @@ var a = {
     icon: 'https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1529265914393&di=d7674e59ceee8914874e00178d2160e4&imgtype=0&src=http%3A%2F%2Fpic.58pic.com%2F10%2F81%2F55%2F47bOOOPIC9f.jpg'
 }
 if(document[hiddenProperty]){
+    notiflag = 1;
     newNotification(msg.sender+' send you a message!',a);
 }
 if(nowreceiver !=msg.sender)
@@ -217,7 +219,9 @@ if(nowreceiver !=msg.sender)
     var num = $$('friend_unreadNum_' + msg.sender).innerHTML;
     var numInt = parseInt(num) + 1;
     $$('friend_unreadNum_' + msg.sender).innerHTML = numInt;
-    newNotification(msg.sender+' send you a message!',a);
+    if(notiflag!=1) {
+        newNotification(msg.sender + ' send you a message!', a);
+    }
 }
     if (message_store.Exist(msg.sender)) {
         message_store.AppendMessage(msg.sender, msg.message);
@@ -229,6 +233,7 @@ if(nowreceiver !=msg.sender)
 
 
 socket.on('groupchat:message', (msg) => {
+    let notiflag = 0;
     if(msg.sender!=$$('user_username').innerText){
         var checkat = '@' + authinfo.username + ' ';
         if(msg.message.content.indexOf(checkat) != -1) {
@@ -244,11 +249,13 @@ var a = {
 
 }
 if(document[hiddenProperty]) {
+        notiflag = 1;
     newNotification("新群聊消息！", a);
 }
 if(nowreceivergroup!=msg.target && msg.sender!=$$('user_username').innerText) {
-
+if(notiflag!=1) {
     newNotification("新群聊消息！", a);
+}
     $$('group_unreadTag_' + msg.target).style.display = "block";
     var num = $$('group_unreadNum_' + msg.target).innerHTML;
     var numInt = parseInt(num) + 1;
