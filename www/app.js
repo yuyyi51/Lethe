@@ -227,6 +227,7 @@ if(nowreceiver !=msg.sender)
     messageBox.scrollTop = messageBox.scrollHeight;
 });
 
+
 socket.on('groupchat:message', (msg) => {
     if(msg.sender!=$$('user_username').innerText){
         var checkat = '@' + authinfo.username + ' ';
