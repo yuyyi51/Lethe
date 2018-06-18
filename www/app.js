@@ -581,8 +581,11 @@ socket.on('picture:query', (res) => {
         appendMessage(imagehtml);
         messageBox.scrollTop = messageBox.scrollHeight;
         let message = MessageDirector.GetInstance.createMessage(imagemessage, authinfo.username, receiver);
-        socket.emit('chat:message', message);
-        message_store.AppendMessage(receiver, message.message);
+        if (is_group_chat)
+            socket.emit('groupchat:message', message, message_store.GetMessage('group_members_' + receiver));
+        else
+            socket.emit('chat:message', message);
+        message_store.AppendMessage(receiver, message.message, );
         upload_image = {};
     }
     else {
@@ -608,7 +611,10 @@ socket.on('picture:upload', (res) => {
         appendMessage(imagehtml);
         messageBox.scrollTop = messageBox.scrollHeight;
         let message = MessageDirector.GetInstance.createMessage(imagemessage, authinfo.username, receiver);
-        socket.emit('chat:message', message);
+        if (is_group_chat)
+            socket.emit('groupchat:message', message, message_store.GetMessage('group_members_' + receiver));
+        else
+            socket.emit('chat:message', message);
         message_store.AppendMessage(receiver, message.message);
         upload_image = {};
     }
