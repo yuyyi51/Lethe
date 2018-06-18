@@ -1,17 +1,33 @@
+const fs = require('fs');
+const axios = require('axios');
+const SparkMD5 = require('spark-md5');
 const express = require('express');
 const app = express();
 const http = require('http').Server(app);
 const io = require('socket.io')(http);
-const fs = require('fs');
-const SparkMD5 = require('spark-md5');
 
 const config = require('./lib/config');
 const mongodb = require('./lib/db');
 const db = new mongodb(config.db);
 const message_mediator = require('./lib/message_mediator');
+let wallpapar_url;
+
+// const cache trick
+axios.get('https://cn.bing.com/HPImageArchive.aspx?format=js&n=1', {
+  timeout: 5000,
+  responseType: 'json',
+  headers: {'X-Requested-With': 'XMLHttpRequest'}
+}).then((r) => {
+  wallpapar_url = 'https://cn.bing.com' + r.data.images[0].url.replace('1920x1080', '800x600');
+}).catch((err) => {
+  console.log('[Wallpaper] failed.');
+});
 
 // http
 app.use('/', express.static(__dirname + '/www'));
+app.use('/wallpaper', (req, res) => {
+  res.send(wallpapar_url);
+});
 http.listen(config.http.port, () => {
   console.log('listening on *:' + config.http.port);
 });
@@ -24,7 +40,6 @@ const user_socket = new Map(); // username -> socket
 io.on('connection', (socket) => {
   console.log('visitor connected.');
 
-
   socket.on('disconnect', () => {
     let u = mediator.GetUserFromSocket(socket);
     if(u !== undefined) console.log(u + ' disconnected.');
@@ -36,7 +51,6 @@ io.on('connection', (socket) => {
     socket_user.delete(socket.id);
     */
   });
-
 
   function getUsername(){
     return mediator.GetUserFromSocket(socket);
@@ -285,6 +299,13 @@ socket.on('user_insert:add',(data)=>{
     socket.on('groupchat:add', (data) => {
         console.log("Add: " + data.name + " " + data.chat_id);
         db.add_group(data.chat_id, data.name)
+    });
+    //获取成员名单
+    socket.on('groupchat:get_list', (data) => {
+        console.log("Get list of group: " + data);
+        db.get_group_list(data, (res) => {
+            socket.emit('groupchat:get_list', res);
+        });
     });
 
   /**********************/
