@@ -126,3 +126,9 @@ fabric.properties
 /doc/bootstrap.min.css
 /www/data/images/
 .DS_Store
+.DS_Store
+doc/架构设计草稿-v1.0.docx
+doc/架构设计说明书_修改.docx
+doc/架构设计草稿-v1.0.docx
+*.docx
+.DS_Store

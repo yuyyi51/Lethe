@@ -265,6 +265,13 @@ io.on('connection', (socket) => {
         console.log("Add: " + data.name + " " + data.chat_id);
         db.add_group(data.chat_id, data.name)
     });
+    //获取成员名单
+    socket.on('groupchat:get_list', (data) => {
+        console.log("Get list of group: " + data);
+        db.get_group_list(data, (res) => {
+            socket.emit('groupchat:get_list', res);
+        });
+    });
 
   /**********************/
   /* Part 3 : Resources */
