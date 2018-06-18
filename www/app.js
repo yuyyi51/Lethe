@@ -345,7 +345,7 @@ function addGroupsList(groupid) {
             main.style.visibility = 'visible';
             receiver = Number(this.id.replace('group_', ''));
             console.log(user + ' chats with group' + receiver);
-            $$('chat_title').textContent = '在群组 ' + groupinfo.groupname + ' 内聊天';
+            $$('chat_title').textContent = '在群组 ' + (groupinfo.groupname || receiver) + ' 内聊天';
             // 2. main: retrieve history
             while (messages.firstChild) {
                 messages.removeChild(messages.firstChild);
