@@ -82,6 +82,7 @@ socket.on('user:login', (res) => {
   img.id = authinfo.username + '_avatar';
   $$('user_avatar').appendChild(img);
   socket.emit('get_all_info');
+socket.emit('user_store:list',authinfo.username);
   // socket.emit('user:get_avatar',{user: authinfo.username});
   // socket.emit('user:get_userinfo', authinfo, (userinfo) => {
   //   let user = userinfo;
@@ -234,6 +235,58 @@ if(nowreceivergroup!=msg.target && msg.sender!=$$('user_username').innerText) {
             appendMessage(MessageDirector.GetInstance.createHTML(msg.message, avatar_store.get(msg.sender), authinfo.username));
     }
     messageBox.scrollTop = messageBox.scrollHeight;
+});
+
+socket.on('user_store:list',(data)=>{
+
+    if(data) {
+        for (let i = 0; i < data.length; ++i) {
+
+            let friend_name = data[i];
+            let ul_friends = $$('friends');
+            let li_friend = document.createElement('li');
+            li_friend.id = 'friend_' + friend_name;
+            li_friend.style.height="60px";
+            li_friend.style.padding="10px";
+            li_friend.innerHTML =
+                '<button type="button" '+' id="no_friend_'+friend_name+'" data-dismiss="modal" '+'class="close" '+'name='+friend_name+' style="float: left; width: 10%" > '+
+                ' <span aria-hidden="true" style="color: white">×</span>' +
+                '<span class="sr-only">Close</span>'+
+                '</button>'+
+                '<div class="main_li" style="width: 50%">' +
+                '<div class="username">' + friend_name + '<button type="button" style="float: right" class="material-icons" id="yes_friend_' + friend_name + '">√</button>'+'</div>';
+            ul_friends.appendChild(li_friend);
+            $('#no_friend_'+friend_name).click(
+                ()=>{
+                let confirm_res=confirm('你确定要拒绝该好友请求吗？');
+            if (confirm_res){
+                let del_info={
+                    requestUserName: user,
+                    requestFriendName:friend_name,
+                    decision:'No'
+                };
+                socket.emit('user_insert:add',del_info);
+
+            }
+        }
+        );
+            $('#yes_friend_'+friend_name).click(
+                ()=>{
+                let confirm_res=confirm('你确定要同意该好友请求吗？');
+            if (confirm_res){
+                let del_info={
+                    requestUserName: user,
+                    requestFriendName:friend_name,
+                    decision:'Yes'
+                };
+                socket.emit('user_insert:add',del_info);
+
+            }
+        }
+        );
+
+        }
+    }
 });
 
 /*
@@ -703,7 +756,7 @@ $$('add-friend-btn').onclick =()=>{
             requestFriendName:$('#add-friend-name').val()
         };
         $('#add-friend-msg').hide();
-        socket.emit('chat:add',data);
+        socket.emit('user_store:add',data);
         // window.location.reload(true);
     }
 };
@@ -770,21 +823,24 @@ $$('conf-close').onclick = ()=>{
     $('#rename-group-name').val('');
 };
 
-socket.on('chat:add', (res) => {        //处理返回结果
-        if (res === null) {
-            alert("该账号不存在！");
-        }
-        else if (res === 'exist') {
-            alert("已是好友！");
-        }
-        else if (res === 'success') {
-            alert("添加成功");
-            addFriendsList($('#add-friend-name').val());
-        }
-        else {
-            alert("其它错误！");
-        }
-    }
+socket.on('user_store:add', (res) => {        //处理返回结果
+    if (res === null) {
+    alert("该账号不存在！");
+}
+else if (res === 'exist1') {
+    alert("已是好友！");
+}
+else if(res === 'exist2'){
+    alert("对方还未回复！");
+}
+else if (res === 'success') {
+    window.location.reload(true);
+    alert("添加成功,请等待对方回复");
+}
+else {
+    alert("其它错误！");
+}
+}
 );
 
 socket.on('chat:del',(res)=>{
@@ -793,7 +849,16 @@ socket.on('chat:del',(res)=>{
         window.location.reload(true);
     }
 });
-
+socket.on('user_insert:add',(res)=>{
+    if(res===true){
+        alert('添加好友成功');
+        window.location.reload(true);
+    }
+    else{
+        alert('拒绝好友申请成功');
+        window.location.reload(true);
+    }
+});
 //group controll
 
 //创建群聊
