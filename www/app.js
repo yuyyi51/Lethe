@@ -962,12 +962,12 @@ socket.on('renew:members', (username, GID, type) => {
 // Finally: main start
 /* auto login */
 //TODO: 为了测试把自动登录关掉了
-// authinfo = store.get('authinfo'); // 用户登陆信息 { username: str, password: str }
-// user = authinfo ? authinfo.username : null; // 暂存用户名
-// if(authinfo) {
-//   console.log('[Init] try auto login');
-//   socket.emit('user:login', authinfo);
-// }
+ authinfo = store.get('authinfo'); // 用户登陆信息 { username: str, password: str }
+ user = authinfo ? authinfo.username : null; // 暂存用户名
+ if(authinfo) {
+   console.log('[Init] try auto login');
+   socket.emit('user:login', authinfo);
+}
 
 // ok, now show HTML body
 $$('body').style.visibility = 'visible';
