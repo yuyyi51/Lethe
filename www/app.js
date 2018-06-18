@@ -170,6 +170,7 @@ function clearTitle(){
     document.title="Lethe";
 }
 function newNotification(title, options) {
+    console.log("createNotification");
     title = title || '新的消息'
     options = options || {
         body: '默认消息',
@@ -179,33 +180,25 @@ function newNotification(title, options) {
 }
 
 
-
-
 socket.on('chat:message', (msg) => {
 
     console.log(msg.message.content);
     FlashTitle(msg.sender,msg.message.content);
+var a = {
+    body: msg.message.content,
+    icon: 'https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1529265914393&di=d7674e59ceee8914874e00178d2160e4&imgtype=0&src=http%3A%2F%2Fpic.58pic.com%2F10%2F81%2F55%2F47bOOOPIC9f.jpg'
+}
+if(document[hiddenProperty]){
+    newNotification(msg.sender+' send you a message!',a);
+}
 if(nowreceiver !=msg.sender)
 {
-
-    var a = {
-        body: msg.message.content,
-        icon: 'https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1529265914393&di=d7674e59ceee8914874e00178d2160e4&imgtype=0&src=http%3A%2F%2Fpic.58pic.com%2F10%2F81%2F55%2F47bOOOPIC9f.jpg'
-
-    }
-    if(document[hiddenProperty]){
-        newNotification(msg.sender+' send you a message!',a);
-    }
-
 
     $$('friend_unreadTag_' + msg.sender).style.display = "block";
     var num = $$('friend_unreadNum_' + msg.sender).innerHTML;
     var numInt = parseInt(num) + 1;
     $$('friend_unreadNum_' + msg.sender).innerHTML = numInt;
 }
-
-
-
     if (message_store.Exist(msg.sender)) {
         message_store.AppendMessage(msg.sender, msg.message);
     }
@@ -218,23 +211,22 @@ socket.on('groupchat:message', (msg) => {
     if(msg.sender!=$$('user_username').innerText){
         FlashTitle("新群聊消息",msg.content);
     }
+var a = {
+    body: "快去看看！",
+    icon: 'https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1529265914393&di=d7674e59ceee8914874e00178d2160e4&imgtype=0&src=http%3A%2F%2Fpic.58pic.com%2F10%2F81%2F55%2F47bOOOPIC9f.jpg'
+
+}
+if(document[hiddenProperty]) {
+    newNotification("新群聊消息！", a);
+}
 if(nowreceivergroup!=msg.target && msg.sender!=$$('user_username').innerText) {
 
-    var a = {
-        body: "快去看看！",
-        icon: 'https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1529265914393&di=d7674e59ceee8914874e00178d2160e4&imgtype=0&src=http%3A%2F%2Fpic.58pic.com%2F10%2F81%2F55%2F47bOOOPIC9f.jpg'
-
-    }
-    if(document[hiddenProperty]) {
-        newNotification("新群聊消息！", a);
-    }
 
     $$('group_unreadTag_' + msg.target).style.display = "block";
     var num = $$('group_unreadNum_' + msg.target).innerHTML;
     var numInt = parseInt(num) + 1;
     $$('group_unreadNum_' + msg.target).innerHTML = numInt;
 }
-
     if(msg.sender !== authinfo.username){
         message_store.AppendMessage(msg.target, msg.message);
         if(receiver === msg.target)
