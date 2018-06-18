@@ -268,11 +268,13 @@ socket.on('user_store:list',(data)=>{
             li_friend.style.padding="10px";
             li_friend.innerHTML =
                 '<button type="button" '+' id="no_friend_'+friend_name+'" data-dismiss="modal" '+'class="close" '+'name='+friend_name+' style="float: left; width: 10%" > '+
-                ' <span aria-hidden="true" style="color: white">×</span>' +
+                ' <span class="material-icons" aria-hidden="true" style="color: white">delete</span>' +
                 '<span class="sr-only">Close</span>'+
                 '</button>'+
                 '<div class="main_li" style="width: 50%">' +
-                '<div class="username">' + friend_name + '<button type="button" style="float: right" class="material-icons" id="yes_friend_' + friend_name + '">√</button>'+'</div>';
+                '<div class="username"><span>' + friend_name + '<div style="float:right;display: none" >'+'<span style="border-radius: 50%;    height: 20px;    width: 20px;    display: inline-block;    background: #FA676A;      vertical-align: top;">'+
+                '<span style="display: block;    color: #FFFFFF;    height: 20px;    line-height: 20px;    text-align: center" >0</span>'+
+                '</span>'+'</div>'+ '</span><i style="float: right" class="material-icons" id="yes_friend_' + friend_name + '">check_circle_outline</i></div>'
             ul_friends.appendChild(li_friend);
             $('#no_friend_'+friend_name).click(
                 ()=>{
