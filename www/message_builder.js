@@ -47,12 +47,16 @@ TextMessageBuilder.prototype.createHTML = function (message, avatarsrc, selfname
     let content = message.content;
     //生成@超链接
     let reg_atuser = /@.+?\s/g;
+    let superlink = null;
     if (reg_atuser.test(content))
     {
         let at_username = content.match(reg_atuser);
         for(i in at_username)
         {
-            let superlink = "<a href=\"javascript:addAtUser(\'"+ at_username[i] +"\')\" id=\"at_user\">" + at_username[i] + "</a>";
+            if(selfname === at_username[i].slice(1, length-1))
+                superlink = "<a href=\"javascript:addAtUser(\'"+ at_username[i] +"\')\" id=\"at_user\" style = \"background-color: #b6f7b6\">" + at_username[i] + "</a>";
+            else
+                superlink = "<a href=\"javascript:addAtUser(\'"+ at_username[i] +"\')\" id=\"at_user\">" + at_username[i] + "</a>";
             content = content.replace(at_username[i], superlink);
         }
     }
@@ -82,6 +86,21 @@ TextMessageBuilder.prototype.createHTML = function (message, avatarsrc, selfname
 };
 
 TextMessageBuilder.prototype.createHTMLFromPlain = function (plain_message) {
+    //生成@超链接
+    let reg_atuser = /@.+?\s/g;
+    let superlink = null;
+    if (reg_atuser.test(plain_message))
+    {
+        let at_username = plain_message.match(reg_atuser);
+        for(i in at_username)
+        {
+            if($$('user_username').innerHTML === at_username[i].slice(1, length-1))
+                superlink = "<a href=\"javascript:addAtUser(\'"+ at_username[i] +"\')\" id=\"at_user\" style = \"background-color: #b6f7b6\">" + at_username[i] + "</a>";
+            else
+                superlink = "<a href=\"javascript:addAtUser(\'"+ at_username[i] +"\')\" id=\"at_user\">" + at_username[i] + "</a>";
+            plain_message = plain_message.replace(at_username[i], superlink);
+        }
+    }
     plain_message = plain_message.replace(/\n/g, '<br>');
     let regLink = /(https?|ftp|file):\/\/[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|]/g;
     let links = plain_message.match(regLink);
