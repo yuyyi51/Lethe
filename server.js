@@ -152,8 +152,7 @@ io.on('connection', (socket) => {
   /* Part 2 : Chat */
   /*****************/
 // 添加待加好友
-// on:    { requestUserName: str ,requestFriendName: str}
-// emit:  result
+
 socket.on('user_store:add',(data)=>{
     db.appand_friend_store(data.requestUserName,data.requestFriendName,(res)=>{
     socket.emit('user_store:add',res);
