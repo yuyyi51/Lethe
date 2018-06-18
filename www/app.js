@@ -456,7 +456,6 @@ $$('add-group').onclick=()=>{
 }
 
 $$('add-friend-btn').onclick =()=>{
-    // console.log($('#add-friend-name').val().length);
     if ($('#add-friend-name').val().length===0){     //输入的添加好友的账号为空
         $('#add-friend-msg').html('添加好友账号不能为空！');
         $('#add-friend-msg').show();
@@ -469,7 +468,6 @@ $$('add-friend-btn').onclick =()=>{
         };
         $('#add-friend-msg').hide();
         socket.emit('chat:add',data);
-        // window.location.reload(true);
     }
 }
 
@@ -538,7 +536,6 @@ socket.on('group:add', (res) => {
         alert('该群聊不存在！');
     }
     else if (res==='success'){
-        window.location.reload(true);
         alert("添加成功");
     }
     else {
