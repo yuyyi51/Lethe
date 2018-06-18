@@ -81,29 +81,6 @@ socket.on('user:login', (res) => {
         store.remove('authinfo');
         return;
     }
-
-<<<<<<< HEAD
-    change_login_status(true);
-    let img = document.createElement('img');
-    img.style.display = 'none';
-    img.src = $$('user_avatar').src;
-    img.id = authinfo.username + '_avatar';
-    $$('user_avatar').appendChild(img);
-    socket.emit('get_all_info');
-    // socket.emit('user:get_avatar',{user: authinfo.username});
-    // socket.emit('user:get_userinfo', authinfo, (userinfo) => {
-    //   let user = userinfo;
-    //   console.log(user);
-    //   let div_user_username = $$('user_username');
-    //   div_user_username.textContent = user.username;
-    //   if(user.friends) for (let i = 0; i < user.friends.length; ++i) {
-    //     socket.emit('user:get_friends',{user: user.friends[i]});
-    //   }
-    //   if(user.ingroup) for (let i = 0; i < user.ingroup.length; ++i){
-    //       socket.emit('user:get_groups',{groupid: user.ingroup[i]});
-    //   }
-    // });
-=======
   change_login_status(true);
   let img = document.createElement('img');
   img.style.display = 'none';
@@ -111,7 +88,7 @@ socket.on('user:login', (res) => {
   img.id = authinfo.username + '_avatar';
   $$('user_avatar').appendChild(img);
   socket.emit('get_all_info');
-socket.emit('user_store:list',authinfo.username);
+  socket.emit('user_store:list',authinfo.username);
   // socket.emit('user:get_avatar',{user: authinfo.username});
   // socket.emit('user:get_userinfo', authinfo, (userinfo) => {
   //   let user = userinfo;
@@ -125,7 +102,6 @@ socket.emit('user_store:list',authinfo.username);
   //       socket.emit('user:get_groups',{groupid: user.ingroup[i]});
   //   }
   // });
->>>>>>> c4786abdd428e7f2741f17c2702e96d53cf2ba1d
 });
 
 $$('log_out').onclick = () => {  // as logout btn
@@ -179,15 +155,11 @@ function FlashTitle(title, content) {
         if (index % 2) {
             $('title').text('【　　　】from ' + title);//这里是中文全角空格，其他不行
         } else {
-<<<<<<< HEAD
-            $('title').text('【新消息】from ' + title);
-=======
             if(being_at == false)
                 $('title').text('【新消息】from '+title );
             else {
                 $('title').text('【有人@你】from ' + title);
             }
->>>>>>> 20e93c92de6ac818dc7302dece8fcff2adabf53f
         }
         index++;
 
@@ -230,28 +202,6 @@ socket.on('chat:message', (msg) => {
         else
             being_at = false;
     console.log(msg.message.content);
-<<<<<<< HEAD
-    FlashTitle(msg.sender, msg.message.content);
-    if (nowreceiver != msg.sender) {
-
-        var a = {
-            body: msg.message.content,
-            icon: 'https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1529265914393&di=d7674e59ceee8914874e00178d2160e4&imgtype=0&src=http%3A%2F%2Fpic.58pic.com%2F10%2F81%2F55%2F47bOOOPIC9f.jpg'
-
-        }
-        if (document[hiddenProperty]) {
-            newNotification(msg.sender + ' send you a message!', a);
-        }
-
-
-        $$('friend_unreadTag_' + msg.sender).style.display = "block";
-        var num = $$('friend_unreadNum_' + msg.sender).innerHTML;
-        var numInt = parseInt(num) + 1;
-        $$('friend_unreadNum_' + msg.sender).innerHTML = numInt;
-    }
-
-
-=======
     FlashTitle(msg.sender,msg.message.content);
 var a = {
     body: msg.message.content,
@@ -269,7 +219,6 @@ if(nowreceiver !=msg.sender)
     $$('friend_unreadNum_' + msg.sender).innerHTML = numInt;
     newNotification(msg.sender+' send you a message!',a);
 }
->>>>>>> 20e93c92de6ac818dc7302dece8fcff2adabf53f
     if (message_store.Exist(msg.sender)) {
         message_store.AppendMessage(msg.sender, msg.message);
     }
@@ -279,29 +228,6 @@ if(nowreceiver !=msg.sender)
 });
 
 socket.on('groupchat:message', (msg) => {
-<<<<<<< HEAD
-    if (msg.sender != $$('user_username').innerText) {
-        FlashTitle("新群聊消息", msg.content);
-    }
-    if (nowreceivergroup != msg.target && msg.sender != $$('user_username').innerText) {
-
-        var a = {
-            body: "快去看看！",
-            icon: 'https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1529265914393&di=d7674e59ceee8914874e00178d2160e4&imgtype=0&src=http%3A%2F%2Fpic.58pic.com%2F10%2F81%2F55%2F47bOOOPIC9f.jpg'
-
-        }
-        if (document[hiddenProperty]) {
-            newNotification("新群聊消息！", a);
-        }
-
-        $$('group_unreadTag_' + msg.target).style.display = "block";
-        var num = $$('group_unreadNum_' + msg.target).innerHTML;
-        var numInt = parseInt(num) + 1;
-        $$('group_unreadNum_' + msg.target).innerHTML = numInt;
-    }
-
-    if (msg.sender !== authinfo.username) {
-=======
     if(msg.sender!=$$('user_username').innerText){
         var checkat = '@' + authinfo.username + ' ';
         if(msg.message.content.indexOf(checkat) != -1) {
@@ -328,7 +254,6 @@ if(nowreceivergroup!=msg.target && msg.sender!=$$('user_username').innerText) {
     $$('group_unreadNum_' + msg.target).innerHTML = numInt;
 }
     if(msg.sender !== authinfo.username){
->>>>>>> 20e93c92de6ac818dc7302dece8fcff2adabf53f
         message_store.AppendMessage(msg.target, msg.message);
         if (receiver === msg.target)
             appendMessage(MessageDirector.GetInstance.createHTML(msg.message, avatar_store.get(msg.sender), authinfo.username));
@@ -859,11 +784,7 @@ $$('add-friend-btn').onclick = () => {
             requestFriendName: $('#add-friend-name').val()
         };
         $('#add-friend-msg').hide();
-<<<<<<< HEAD
-        socket.emit('chat:add', data);
-=======
         socket.emit('user_store:add',data);
->>>>>>> c4786abdd428e7f2741f17c2702e96d53cf2ba1d
         // window.location.reload(true);
     }
 };
